@@ -1,0 +1,38 @@
+{
+  "id": "daily-fallback",
+  "world": 0,
+  "grid": {
+    "w": 5,
+    "h": 6
+  },
+  "moveLimit": 9,
+  "blocks": [
+    {
+      "id": "a",
+      "color": "red",
+      "cells": [[0, 3]],
+      "dir": "right"
+    },
+    {
+      "id": "b",
+      "color": "blue",
+      "cells": [[2, 1]],
+      "dir": "right"
+    },
+    {
+      "id": "c",
+      "color": "green",
+      "cells": [[1, 1]],
+      "dir": "down"
+    }
+  ],
+  "solver": {
+    "solvable": true,
+    "optimalMoves": 3,
+    "branching": 1.7142857142857142,
+    "deadEnds": 0,
+    "difficulty": 0.2729591836734694
+  },
+  "seed": 0,
+  "generatorVersion": "daily-bundled-fallback"
+}

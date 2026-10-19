@@ -6,22 +6,25 @@ class OnboardingService {
 
   SharedPreferences? _prefs;
 
-  Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+  Future<void> _ensurePrefs() async {
+    _prefs ??= await SharedPreferences.getInstance();
   }
 
   Future<bool> isOnboardingCompleted() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    await _ensurePrefs();
+    final prefs = _prefs!;
     return prefs.getBool(_completedKey) ?? false;
   }
 
   Future<void> markOnboardingCompleted() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    await _ensurePrefs();
+    final prefs = _prefs!;
     await prefs.setBool(_completedKey, true);
   }
 
   Future<void> resetForTesting() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    await _ensurePrefs();
+    final prefs = _prefs!;
     await prefs.remove(_completedKey);
   }
 

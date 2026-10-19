@@ -12,7 +12,6 @@ void main() {
 
     test('onboarding is shown only once', () async {
       final service = OnboardingService();
-      await service.init();
 
       expect(await service.isOnboardingCompleted(), isFalse);
       expect(service.shouldShowForLevel('w1-001', false), isTrue);

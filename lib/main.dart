@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -9,81 +11,18 @@ import 'screens/screens.dart';
 import 'theme/app_typography.dart';
 import 'utils/colors.dart';
 import 'utils/localization.dart';
+import 'utils/startup_timeout.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await HapticService.instance.load();
-  await SoundService.instance.init();
-
-  try {
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-  } catch (e) {
-    debugPrint('Orientation lock error: $e');
-  }
-
-  // Initialize Firebase (optional - may not have google-services.json)
-  bool firebaseAvailable = false;
-  try {
-    await Firebase.initializeApp();
-    firebaseAvailable = true;
-    debugPrint('Firebase initialized successfully');
-  } catch (e) {
-    debugPrint('Firebase init skipped (no google-services.json): $e');
-  }
-
-  // Storage service - required, but guard anyway
   final storageService = StorageService();
-  try {
-    await storageService.init();
-  } catch (e) {
-    debugPrint('Storage service init error: $e');
-  }
-
-  // Remote config - optional, uses defaults if Firebase unavailable
   final remoteConfigService = RemoteConfigService();
-  if (firebaseAvailable) {
-    try {
-      await remoteConfigService.init();
-    } catch (e) {
-      debugPrint('Remote config init error: $e');
-    }
-  }
-
-  // Analytics - optional
   final analyticsService = AnalyticsService();
-  if (firebaseAvailable) {
-    try {
-      await analyticsService.init();
-    } catch (e) {
-      debugPrint('Analytics init error: $e');
-    }
-  }
-
-  // Level service - required for game
   final levelService = LevelService();
-
   final dailyPuzzleService = DailyPuzzleService();
-  try {
-    await dailyPuzzleService.init();
-  } catch (e) {
-    debugPrint('Daily puzzle service init error: $e');
-  }
-
   final onboardingService = OnboardingService();
-  try {
-    await onboardingService.init();
-  } catch (e) {
-    debugPrint('Onboarding service init error: $e');
-  }
-
-  // Ad service - optional
   final adService = AdService(remoteConfigService);
-
-  // IAP service - optional
   final iapService = IAPService();
 
   runApp(
@@ -120,74 +59,145 @@ class BlockshadeApp extends StatefulWidget {
 }
 
 class _BlockshadeAppState extends State<BlockshadeApp> {
-  bool _initialized = false;
+  static const Duration _initTimeout = Duration(seconds: 4);
+
+  bool _firebaseAvailable = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeServices();
+    final storageService = context.read<StorageService>();
+    final remoteConfigService = context.read<RemoteConfigService>();
+    final analyticsService = context.read<AnalyticsService>();
+    final adService = context.read<AdService>();
+    final iapService = context.read<IAPService>();
+    final gameProvider = context.read<GameProvider>();
+    unawaited(
+      _initializeServices(
+        storageService: storageService,
+        remoteConfigService: remoteConfigService,
+        analyticsService: analyticsService,
+        adService: adService,
+        iapService: iapService,
+        gameProvider: gameProvider,
+      ),
+    );
   }
 
-  Future<void> _initializeServices() async {
+  Future<void> _initializeServices({
+    required StorageService storageService,
+    required RemoteConfigService remoteConfigService,
+    required AnalyticsService analyticsService,
+    required AdService adService,
+    required IAPService iapService,
+    required GameProvider gameProvider,
+  }) async {
+    unawaited(
+      startupWithTimeoutVoid(
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ]),
+        timeout: _initTimeout,
+        debugLabel: 'orientation',
+      ),
+    );
+
+    await startupWithTimeoutVoid(
+      HapticService.instance.load(),
+      timeout: _initTimeout,
+      debugLabel: 'haptics',
+    );
+
+    await startupWithTimeoutVoid(
+      SoundService.instance.init(),
+      timeout: _initTimeout,
+      debugLabel: 'sound',
+    );
+
+    _firebaseAvailable = await startupWithTimeout(
+      _tryInitFirebase(),
+      timeout: _initTimeout,
+      fallback: false,
+      debugLabel: 'firebase',
+    );
+
+    await startupWithTimeoutVoid(
+      storageService.init(),
+      timeout: _initTimeout,
+      debugLabel: 'storage',
+    );
+
+    if (_firebaseAvailable) {
+      await startupWithTimeoutVoid(
+        remoteConfigService.init(),
+        timeout: _initTimeout,
+        debugLabel: 'remote_config',
+      );
+    }
+
+    if (_firebaseAvailable) {
+      await startupWithTimeoutVoid(
+        analyticsService.init(),
+        timeout: _initTimeout,
+        debugLabel: 'analytics',
+      );
+    }
+
+    await startupWithTimeoutVoid(
+      adService.init(),
+      timeout: _initTimeout,
+      debugLabel: 'ads',
+    );
+
+    await startupWithTimeoutVoid(
+      iapService.init(),
+      timeout: _initTimeout,
+      debugLabel: 'iap',
+    );
+
+    await startupWithTimeoutVoid(
+      gameProvider.init(),
+      timeout: _initTimeout,
+      debugLabel: 'game_provider',
+    );
+
     try {
-      final adService = context.read<AdService>();
-      final iapService = context.read<IAPService>();
-      final gameProvider = context.read<GameProvider>();
-      final storageService = context.read<StorageService>();
-      final analyticsService = context.read<AnalyticsService>();
-
-      // Initialize ads - guard against missing AdMob config
-      try {
-        await adService.init();
-      } catch (e) {
-        debugPrint('Ad service init error (non-fatal): $e');
-      }
-
-      // Initialize IAP - guard against Play Store unavailable
-      try {
-        await iapService.init();
-      } catch (e) {
-        debugPrint('IAP service init error (non-fatal): $e');
-      }
-
-      // Initialize game provider - required
-      try {
-        await gameProvider.init();
-      } catch (e) {
-        debugPrint('Game provider init error: $e');
-      }
-
-      // Log app open - optional
-      try {
-        final isFirstOpen = await storageService.isFirstOpen();
-        final daysSinceInstall = await storageService.getDaysSinceInstall();
-        await analyticsService.logAppOpen(
+      final daysSinceInstall = await startupWithTimeout(
+        storageService.getDaysSinceInstall(),
+        timeout: const Duration(seconds: 2),
+        fallback: 0,
+        debugLabel: 'install_age',
+      );
+      final isFirstOpen = await startupWithTimeout(
+        storageService.isFirstOpen(),
+        timeout: const Duration(seconds: 2),
+        fallback: false,
+        debugLabel: 'first_open',
+      );
+      await startupWithTimeoutVoid(
+        analyticsService.logAppOpen(
           firstOpen: isFirstOpen,
           daysSinceInstall: daysSinceInstall,
-        );
-      } catch (e) {
-        debugPrint('Analytics log error (non-fatal): $e');
-      }
-
-      // Start ad session tracking
-      try {
-        adService.onSessionStart();
-      } catch (e) {
-        debugPrint('Ad session start error (non-fatal): $e');
-      }
-
-      if (mounted) {
-        setState(() {
-          _initialized = true;
-        });
-      }
+        ),
+        timeout: const Duration(seconds: 2),
+        debugLabel: 'analytics_app_open',
+      );
     } catch (e) {
-      debugPrint('Service initialization error: $e');
-      if (mounted) {
-        setState(() {
-          _initialized = true; // Still show home screen even on error
-        });
-      }
+      debugPrint('Analytics log error (non-fatal): $e');
+    }
+
+    adService.onSessionStart();
+  }
+
+  Future<bool> _tryInitFirebase() async {
+    try {
+      await Firebase.initializeApp();
+      debugPrint('Firebase initialized successfully');
+      return true;
+    } catch (e) {
+      debugPrint('Firebase init skipped (no google-services.json): $e');
+      return false;
     }
   }
 
@@ -232,34 +242,7 @@ class _BlockshadeAppState extends State<BlockshadeApp> {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('sv'),
-      home: _initialized ? const HomeScreen() : const _SplashScreen(),
-    );
-  }
-}
-
-class _SplashScreen extends StatelessWidget {
-  const _SplashScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Blockshade',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 32),
-            CircularProgressIndicator(
-              color: AppColors.primary,
-              strokeWidth: 2,
-            ),
-          ],
-        ),
-      ),
+      home: const HomeScreen(),
     );
   }
 }

@@ -10,4 +10,5 @@ export 'haptic_service.dart';
 export 'sound_service.dart';
 export 'juice_service.dart';
 export 'daily_puzzle_service.dart';
+export 'daily_puzzle_generator.dart';
 export 'onboarding_service.dart';
