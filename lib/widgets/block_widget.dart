@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../painters/wood_block_painter.dart';
+import '../theme/move_arrows.dart';
 import '../utils/colors.dart';
 import '../theme/verkstad_tokens.dart';
 
@@ -12,6 +13,10 @@ class BlockWidget extends StatefulWidget {
   final bool isLocked;
   final VoidCallback onTap;
   final VoidCallback? onPressDown;
+  final VoidCallback? onPressUp;
+  final bool horizontal;
+  final bool negativeHead;
+  final bool positiveHead;
 
   const BlockWidget({
     super.key,
@@ -22,6 +27,10 @@ class BlockWidget extends StatefulWidget {
     required this.isLocked,
     required this.onTap,
     this.onPressDown,
+    this.onPressUp,
+    this.horizontal = true,
+    this.negativeHead = true,
+    this.positiveHead = true,
   });
 
   @override
@@ -56,8 +65,14 @@ class _BlockWidgetState extends State<BlockWidget> with SingleTickerProviderStat
           widget.onPressDown?.call();
           setState(() => _lift = 3);
         },
-        onTapUp: (_) => setState(() => _lift = 0),
-        onTapCancel: () => setState(() => _lift = 0),
+        onTapUp: (_) {
+          widget.onPressUp?.call();
+          setState(() => _lift = 0);
+        },
+        onTapCancel: () {
+          widget.onPressUp?.call();
+          setState(() => _lift = 0);
+        },
         onTap: widget.isLocked ? null : widget.onTap,
         child: Transform.rotate(
           angle: _rotation,
@@ -71,9 +86,12 @@ class _BlockWidgetState extends State<BlockWidget> with SingleTickerProviderStat
               painter: WoodBlockPainter(
                 fillColor: baseColor,
                 colorName: widget.block.color,
-                textureSeed: textureSeed,
+                textureSeed: textureSeed + notchCountForColor(widget.block.color) * 17,
                 lift: _lift,
-                directionAngle: _directionAngle(widget.block.direction),
+                horizontal: widget.horizontal,
+                negativeHead: widget.negativeHead,
+                positiveHead: widget.positiveHead,
+                notchCount: notchCountForColor(widget.block.color),
               ),
               child: Stack(
                 children: [
@@ -104,19 +122,6 @@ class _BlockWidgetState extends State<BlockWidget> with SingleTickerProviderStat
         ),
       ),
     );
-  }
-
-  double _directionAngle(Direction direction) {
-    switch (direction) {
-      case Direction.up:
-        return -1.5708;
-      case Direction.down:
-        return 1.5708;
-      case Direction.left:
-        return 3.1416;
-      case Direction.right:
-        return 0;
-    }
   }
 
   void playBounce() {
