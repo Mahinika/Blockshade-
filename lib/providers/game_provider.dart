@@ -7,6 +7,7 @@ class GameProvider extends ChangeNotifier {
   final StorageService _storageService;
   final AnalyticsService _analyticsService;
   final RemoteConfigService _remoteConfig;
+  final DailyPuzzleService _dailyPuzzleService;
 
   GameState? _gameState;
   Level? _currentLevel;
@@ -22,10 +23,12 @@ class GameProvider extends ChangeNotifier {
     required StorageService storageService,
     required AnalyticsService analyticsService,
     required RemoteConfigService remoteConfig,
+    required DailyPuzzleService dailyPuzzleService,
   })  : _levelService = levelService,
         _storageService = storageService,
         _analyticsService = analyticsService,
-        _remoteConfig = remoteConfig;
+        _remoteConfig = remoteConfig,
+        _dailyPuzzleService = dailyPuzzleService;
 
   GameState? get gameState => _gameState;
   Level? get currentLevel => _currentLevel;
@@ -53,7 +56,12 @@ class GameProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _currentLevel = await _levelService.loadLevel(levelId);
+    if (DailyPuzzleService.isDailyLevelId(levelId)) {
+      final date = DailyPuzzleService.dateFromLevelId(levelId) ?? DateTime.now();
+      _currentLevel = await _dailyPuzzleService.getLevelForDate(date);
+    } else {
+      _currentLevel = await _levelService.loadLevel(levelId);
+    }
     if (_currentLevel != null) {
       _gameState = GameState.fromLevel(_currentLevel!);
       _attemptNo = 1;
@@ -101,9 +109,16 @@ class GameProvider extends ChangeNotifier {
     final durationSec = DateTime.now().difference(_levelStartTime!).inSeconds;
 
     final coinsEarned = _remoteConfig.coinsBaseWin + (earnedStars * _remoteConfig.coinsPerStar);
-    _progress = _progress
-        .updateLevelProgress(levelId, earnedStars, _gameState!.movesUsed)
-        .addCoins(coinsEarned);
+    if (DailyPuzzleService.isDailyLevelId(levelId)) {
+      final date = DailyPuzzleService.dateFromLevelId(levelId) ?? DateTime.now();
+      _progress = _progress
+          .recordDailyCompletion(date, earnedStars)
+          .addCoins(coinsEarned);
+    } else {
+      _progress = _progress
+          .updateLevelProgress(levelId, earnedStars, _gameState!.movesUsed)
+          .addCoins(coinsEarned);
+    }
 
     _storageService.saveProgress(_progress);
 

@@ -54,6 +54,9 @@ class PlayerProgress {
   final int currentWorld;
   final String? currentLevelId;
   final int totalStars;
+  final int dailyStreak;
+  final String? lastDailyCompletedDate;
+  final Map<String, int> dailyCompletions;
 
   static const int maxLives = 5;
   static const Duration lifeRegenDuration = Duration(minutes: 30);
@@ -71,6 +74,9 @@ class PlayerProgress {
     this.currentWorld = 1,
     this.currentLevelId,
     this.totalStars = 0,
+    this.dailyStreak = 0,
+    this.lastDailyCompletedDate,
+    this.dailyCompletions = const {},
   });
 
   factory PlayerProgress.initial() {
@@ -103,6 +109,50 @@ class PlayerProgress {
     
     final previousLevelId = allLevelIds[index - 1];
     return levelProgress[previousLevelId]?.completed ?? false;
+  }
+
+  bool isDailyCompletedOn(DateTime date) {
+    final key = _dateOnlyKey(date);
+    return dailyCompletions.containsKey(key);
+  }
+
+  static String _dateOnlyKey(DateTime date) {
+    final d = DateTime(date.year, date.month, date.day);
+    return '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  PlayerProgress recordDailyCompletion(DateTime date, int stars) {
+    final key = _dateOnlyKey(date);
+    final today = DateTime(date.year, date.month, date.day);
+    final newCompletions = Map<String, int>.from(dailyCompletions);
+    final previousStars = newCompletions[key] ?? 0;
+    newCompletions[key] = stars > previousStars ? stars : previousStars;
+
+    var streak = dailyStreak;
+    if (lastDailyCompletedDate == null) {
+      streak = 1;
+    } else {
+      final last = DateTime.tryParse(lastDailyCompletedDate!);
+      if (last != null) {
+        final lastDay = DateTime(last.year, last.month, last.day);
+        final diff = today.difference(lastDay).inDays;
+        if (diff == 0) {
+          streak = dailyStreak;
+        } else if (diff == 1) {
+          streak = dailyStreak + 1;
+        } else {
+          streak = 1;
+        }
+      } else {
+        streak = 1;
+      }
+    }
+
+    return copyWith(
+      dailyStreak: streak,
+      lastDailyCompletedDate: key,
+      dailyCompletions: newCompletions,
+    );
   }
 
   int getStarsForWorld(int world) {
@@ -196,6 +246,9 @@ class PlayerProgress {
     int? currentWorld,
     String? currentLevelId,
     int? totalStars,
+    int? dailyStreak,
+    String? lastDailyCompletedDate,
+    Map<String, int>? dailyCompletions,
   }) {
     return PlayerProgress(
       coins: coins ?? this.coins,
@@ -208,6 +261,9 @@ class PlayerProgress {
       currentWorld: currentWorld ?? this.currentWorld,
       currentLevelId: currentLevelId ?? this.currentLevelId,
       totalStars: totalStars ?? this.totalStars,
+      dailyStreak: dailyStreak ?? this.dailyStreak,
+      lastDailyCompletedDate: lastDailyCompletedDate ?? this.lastDailyCompletedDate,
+      dailyCompletions: dailyCompletions ?? this.dailyCompletions,
     );
   }
 
@@ -223,6 +279,9 @@ class PlayerProgress {
         'currentWorld': currentWorld,
         'currentLevelId': currentLevelId,
         'totalStars': totalStars,
+        'dailyStreak': dailyStreak,
+        if (lastDailyCompletedDate != null) 'lastDailyCompletedDate': lastDailyCompletedDate,
+        'dailyCompletions': dailyCompletions,
       };
 
   factory PlayerProgress.fromJson(Map<String, dynamic> json) {
@@ -232,6 +291,14 @@ class PlayerProgress {
       for (final entry in map.entries) {
         progressMap[entry.key] =
             LevelProgress.fromJson(entry.value as Map<String, dynamic>);
+      }
+    }
+
+    final dailyMap = <String, int>{};
+    if (json['dailyCompletions'] != null) {
+      final raw = json['dailyCompletions'] as Map<String, dynamic>;
+      for (final e in raw.entries) {
+        dailyMap[e.key] = e.value as int;
       }
     }
 
@@ -248,6 +315,9 @@ class PlayerProgress {
       currentWorld: json['currentWorld'] as int? ?? 1,
       currentLevelId: json['currentLevelId'] as String?,
       totalStars: json['totalStars'] as int? ?? 0,
+      dailyStreak: json['dailyStreak'] as int? ?? 0,
+      lastDailyCompletedDate: json['lastDailyCompletedDate'] as String?,
+      dailyCompletions: dailyMap,
     );
   }
 

@@ -69,6 +69,14 @@ class AppLocalizations {
       'vibration': 'Vibration',
       'on': 'På',
       'off': 'Av',
+      'daily_puzzle': 'Dagens pussel',
+      'daily_streak': 'Streak',
+      'daily_complete': 'Klar idag',
+      'daily_hint': 'Tips (video)',
+      'daily_hint_body': 'Prova att flytta blocket som löser pusslet först.',
+      'back_home': 'Tillbaka',
+      'skip': 'Hoppa över',
+      'got_it': 'Förstått',
     },
     'en': {
       'app_name': 'Blockshade',
@@ -121,6 +129,14 @@ class AppLocalizations {
       'vibration': 'Vibration',
       'on': 'On',
       'off': 'Off',
+      'daily_puzzle': 'Daily puzzle',
+      'daily_streak': 'Streak',
+      'daily_complete': 'Done today',
+      'daily_hint': 'Hint (video)',
+      'daily_hint_body': 'Try moving the block that starts the solution.',
+      'back_home': 'Back',
+      'skip': 'Skip',
+      'got_it': 'Got it',
     },
   };
 
@@ -171,6 +187,18 @@ class AppLocalizations {
   String get vibration => translate('vibration');
   String get on => translate('on');
   String get off => translate('off');
+  String get dailyPuzzle => translate('daily_puzzle');
+  String get dailyStreak => translate('daily_streak');
+  String get dailyComplete => translate('daily_complete');
+  String get dailyHint => translate('daily_hint');
+  String get dailyHintBody => translate('daily_hint_body');
+  String get backHome => translate('back_home');
+  String get skip => translate('skip');
+  String get gotIt => translate('got_it');
+  String get tutorialTapBlock => translate('tutorial_tap_block');
+  String get tutorialDirection => translate('tutorial_direction');
+  String get tutorialExit => translate('tutorial_exit');
+  String get tutorialEcho => translate('tutorial_echo');
 
   String worldName(int worldNum) {
     return translate('world_${worldNum}_name');

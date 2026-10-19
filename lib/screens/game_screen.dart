@@ -7,9 +7,10 @@ import '../utils/colors.dart';
 import '../utils/localization.dart';
 import '../theme/app_typography.dart';
 import '../theme/verkstad_tokens.dart';
-import '../widgets/brass_star.dart';
 import '../widgets/game_grid.dart';
+import '../widgets/level_complete_overlay.dart';
 import '../widgets/masking_tape.dart';
+import '../widgets/onboarding_overlay.dart';
 import '../widgets/workshop_background.dart';
 
 class GameScreen extends StatefulWidget {
@@ -25,14 +26,58 @@ class _GameScreenState extends State<GameScreen> {
   int _failCount = 0;
   bool _wasWon = false;
   bool _wasLost = false;
+  bool _showOnboarding = false;
+  bool _onboardingChecked = false;
+  String? _dailyHintMessage;
   final _juiceKey = GlobalKey<JuiceOverlayState>();
+
+  bool get _isDaily => DailyPuzzleService.isDailyLevelId(widget.levelId);
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GameProvider>().loadLevel(widget.levelId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<GameProvider>().loadLevel(widget.levelId);
+      await _evaluateOnboarding();
     });
+  }
+
+  Future<void> _evaluateOnboarding() async {
+    final onboarding = context.read<OnboardingService>();
+    final completed = await onboarding.isOnboardingCompleted();
+    final show = onboarding.shouldShowForLevel(widget.levelId, completed);
+    if (mounted) {
+      setState(() {
+        _onboardingChecked = true;
+        _showOnboarding = show;
+      });
+    }
+  }
+
+  Future<void> _skipOnboarding() async {
+    await context.read<OnboardingService>().markOnboardingCompleted();
+    setState(() => _showOnboarding = false);
+  }
+
+  Future<void> _finishOnboardingStep() async {
+    final onboarding = context.read<OnboardingService>();
+    if (widget.levelId == 'w1-003') {
+      await onboarding.markOnboardingCompleted();
+    }
+    setState(() => _showOnboarding = false);
+  }
+
+  Offset _onboardingAnchor(String levelId) {
+    switch (levelId) {
+      case 'w1-001':
+        return const Offset(0.42, 0.48);
+      case 'w1-002':
+        return const Offset(0.82, 0.42);
+      case 'w1-003':
+        return const Offset(0.5, 0.4);
+      default:
+        return const Offset(0.5, 0.45);
+    }
   }
 
   @override
@@ -49,7 +94,7 @@ class _GameScreenState extends State<GameScreen> {
       );
     }
 
-    final theme = WorldThemes.getTheme(level.world);
+    final theme = WorldThemes.getTheme(level.world == 0 ? 1 : level.world);
 
     if (provider.isWon && !_wasWon) {
       _wasWon = true;
@@ -67,7 +112,7 @@ class _GameScreenState extends State<GameScreen> {
     return Scaffold(
       backgroundColor: theme.backgroundColor,
       body: WorkshopBackground(
-        world: level.world,
+        world: level.world == 0 ? 1 : level.world,
         seed: theme.benchSeed,
         child: SafeArea(
           child: Column(
@@ -75,7 +120,11 @@ class _GameScreenState extends State<GameScreen> {
               _buildHeader(provider, level, l10n, theme),
               Expanded(
                 child: Center(
-                  child: _buildGameArea(provider, gameState, level.world),
+                  child: _buildGameArea(
+                    provider,
+                    gameState,
+                    level.world == 0 ? 1 : level.world,
+                  ),
                 ),
               ),
               _buildFooter(provider, l10n),
@@ -83,6 +132,17 @@ class _GameScreenState extends State<GameScreen> {
           ),
         ),
       ),
+      floatingActionButton: _isDaily && !provider.isWon && !provider.isLost
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 72),
+              child: MaskingTapeButton(
+                label: l10n.dailyHint,
+                icon: Icons.lightbulb_outline,
+                onPressed: () => _requestDailyHint(provider),
+              ),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -102,7 +162,9 @@ class _GameScreenState extends State<GameScreen> {
               child: Column(
                 children: [
                   Text(
-                    '${l10n.world} ${level.world} · ${l10n.level} ${level.levelNumber}',
+                    _isDaily
+                        ? l10n.dailyPuzzle
+                        : '${l10n.world} ${level.world} · ${l10n.level} ${level.levelNumber}',
                     style: const TextStyle(fontSize: 13),
                   ),
                   Text(
@@ -159,9 +221,54 @@ class _GameScreenState extends State<GameScreen> {
           ),
           if (provider.isWon) _buildWinOverlay(provider),
           if (provider.isLost) _buildLoseOverlay(provider),
+          if (_showOnboarding && _onboardingChecked)
+            OnboardingOverlay(
+              stepIndex: context.read<OnboardingService>().stepIndexForLevel(widget.levelId),
+              anchorFraction: _onboardingAnchor(widget.levelId),
+              onSkip: _skipOnboarding,
+              onFinishedStep: _finishOnboardingStep,
+            ),
+          if (_dailyHintMessage != null)
+            Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: MaskingTape(
+                  child: Text(_dailyHintMessage!, textAlign: TextAlign.center),
+                ),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  void _requestDailyHint(GameProvider provider) {
+    final l10n = AppLocalizations.of(context);
+    final level = provider.currentLevel;
+    if (level == null) return;
+
+    final adService = context.read<AdService>();
+    void revealHint() {
+      final solver = Solver(level);
+      final result = solver.solve();
+      final firstMove = result.solution?.isNotEmpty == true ? result.solution!.first : null;
+      setState(() {
+        _dailyHintMessage = firstMove != null
+            ? '${l10n.dailyHintBody} ($firstMove)'
+            : l10n.dailyHintBody;
+      });
+    }
+
+    if (adService.isRewardedAdReady) {
+      adService.showRewardedAd(
+        onRewarded: (_) => revealHint(),
+        onAdDismissed: () {},
+        onAdFailedToShow: (_) => revealHint(),
+      );
+    } else {
+      revealHint();
+    }
   }
 
   void _onBlockTap(GameProvider provider, String blockId) {
@@ -176,41 +283,15 @@ class _GameScreenState extends State<GameScreen> {
 
   Widget _buildWinOverlay(GameProvider provider) {
     final l10n = AppLocalizations.of(context);
-    
-    return Container(
-      color: VerkstadTokens.pencil.withValues(alpha: 0.45),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              MaskingTape(
-                rotation: -0.04,
-                child: Text(
-                  '✓ ${l10n.levelComplete}',
-                  style: const TextStyle(fontSize: 22),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(3, (i) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: BrassStar(filled: i < provider.stars, size: 36),
-                  );
-                }),
-              ),
-              const SizedBox(height: 24),
-              MaskingTapeButton(
-                label: l10n.nextLevel,
-                onPressed: () => _goToNextLevel(provider),
-              ),
-            ],
-          ),
-        ),
-      ),
+    final par = provider.currentLevel?.solver?.optimalMoves ?? provider.movesUsed;
+
+    return LevelCompleteOverlay(
+      stars: provider.stars,
+      movesUsed: provider.movesUsed,
+      parMoves: par,
+      nextLabel: _isDaily ? l10n.backHome : null,
+      showNext: true,
+      onNext: () => _goToNextLevel(provider),
     );
   }
 
@@ -406,6 +487,11 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _goToNextLevel(GameProvider provider) async {
+    if (_isDaily) {
+      if (mounted) Navigator.pop(context);
+      return;
+    }
+
     final adService = context.read<AdService>();
     final currentLevel = provider.currentLevel?.levelNumber ?? 0;
 

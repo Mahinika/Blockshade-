@@ -66,6 +66,20 @@ void main() async {
   // Level service - required for game
   final levelService = LevelService();
 
+  final dailyPuzzleService = DailyPuzzleService();
+  try {
+    await dailyPuzzleService.init();
+  } catch (e) {
+    debugPrint('Daily puzzle service init error: $e');
+  }
+
+  final onboardingService = OnboardingService();
+  try {
+    await onboardingService.init();
+  } catch (e) {
+    debugPrint('Onboarding service init error: $e');
+  }
+
   // Ad service - optional
   final adService = AdService(remoteConfigService);
 
@@ -79,6 +93,8 @@ void main() async {
         Provider<RemoteConfigService>.value(value: remoteConfigService),
         Provider<AnalyticsService>.value(value: analyticsService),
         Provider<LevelService>.value(value: levelService),
+        Provider<DailyPuzzleService>.value(value: dailyPuzzleService),
+        Provider<OnboardingService>.value(value: onboardingService),
         Provider<AdService>.value(value: adService),
         Provider<IAPService>.value(value: iapService),
         ChangeNotifierProvider<GameProvider>(
@@ -87,6 +103,7 @@ void main() async {
             storageService: storageService,
             analyticsService: analyticsService,
             remoteConfig: remoteConfigService,
+            dailyPuzzleService: dailyPuzzleService,
           ),
         ),
       ],
