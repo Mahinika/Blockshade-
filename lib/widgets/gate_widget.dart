@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
+import '../painters/wood_block_painter.dart';
+import '../theme/block_symbols.dart';
 import '../utils/colors.dart';
 
 class GateWidget extends StatelessWidget {
@@ -21,7 +23,7 @@ class GateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = BlockColors.getBlockColor(gate.color);
-    
+
     double left, top, width, height;
 
     switch (gate.side) {
@@ -51,24 +53,45 @@ class GateWidget extends StatelessWidget {
         break;
     }
 
+    final symbol = BlockSymbols.forColorName(gate.color);
+
     return Positioned(
       left: left,
       top: top,
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.5),
-              blurRadius: 4,
-              spreadRadius: 1,
-            ),
-          ],
+      child: CustomPaint(
+        size: Size(width, height),
+        painter: WoodBlockPainter(
+          fillColor: color,
+          colorName: gate.color,
+          textureSeed: gate.position + gate.color.hashCode,
+          showDirection: false,
         ),
+        child: symbol != null
+            ? CustomPaint(
+                painter: _GateSymbolPainter(gate.color),
+              )
+            : null,
       ),
     );
   }
+}
+
+class _GateSymbolPainter extends CustomPainter {
+  _GateSymbolPainter(this.colorName);
+
+  final String colorName;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final kind = BlockSymbols.forColorName(colorName);
+    if (kind == null) return;
+    BlockSymbols.paintSymbol(
+      canvas,
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      kind,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GateSymbolPainter oldDelegate) => false;
 }

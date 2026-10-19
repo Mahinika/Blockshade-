@@ -6,3 +6,6 @@ export 'ad_service.dart';
 export 'iap_service.dart';
 export 'analytics_service.dart';
 export 'remote_config_service.dart';
+export 'haptic_service.dart';
+export 'sound_service.dart';
+export 'juice_service.dart';

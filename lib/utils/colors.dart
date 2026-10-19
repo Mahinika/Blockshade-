@@ -1,88 +1,91 @@
 import 'package:flutter/material.dart';
+import '../theme/verkstad_tokens.dart';
 
 class BlockColors {
   static const Map<String, Color> blockColors = {
-    'red': Color(0xFFE53935),
-    'blue': Color(0xFF1E88E5),
-    'green': Color(0xFF43A047),
-    'yellow': Color(0xFFFDD835),
-    'purple': Color(0xFF8E24AA),
-    'orange': Color(0xFFFF9800),
-    'cyan': Color(0xFF00BCD4),
-    'pink': Color(0xFFE91E63),
+    'red': VerkstadTokens.blockRed,
+    'blue': VerkstadTokens.blockBlue,
+    'green': VerkstadTokens.blockGreen,
+    'yellow': VerkstadTokens.blockYellow,
+    'purple': VerkstadTokens.blockPurple,
+    'orange': Color(0xFFB5651D),
+    'cyan': Color(0xFF3A6B7C),
+    'pink': Color(0xFF9A4A5E),
   };
 
   static const Map<String, Color> blockColorsDark = {
-    'red': Color(0xFFC62828),
-    'blue': Color(0xFF1565C0),
-    'green': Color(0xFF2E7D32),
-    'yellow': Color(0xFFF9A825),
-    'purple': Color(0xFF6A1B9A),
-    'orange': Color(0xFFEF6C00),
-    'cyan': Color(0xFF0097A7),
-    'pink': Color(0xFFC2185B),
+    'red': Color(0xFF7A2E1F),
+    'blue': Color(0xFF1E3F54),
+    'green': Color(0xFF3A4F22),
+    'yellow': Color(0xFF8A620C),
+    'purple': Color(0xFF5A3650),
+    'orange': Color(0xFF8A4A12),
+    'cyan': Color(0xFF2A4F5C),
+    'pink': Color(0xFF6E3545),
   };
 
   static Color getBlockColor(String colorName) {
-    return blockColors[colorName.toLowerCase()] ?? Colors.grey;
+    return blockColors[colorName.toLowerCase()] ?? VerkstadTokens.pencil;
   }
 
   static Color getBlockColorDark(String colorName) {
-    return blockColorsDark[colorName.toLowerCase()] ?? Colors.grey.shade700;
+    return blockColorsDark[colorName.toLowerCase()] ?? VerkstadTokens.pencil;
   }
 
   static Color getEchoShadowColor(String colorName) {
-    final baseColor = getBlockColor(colorName);
-    return baseColor.withOpacity(0.35);
+    return VerkstadTokens.pencil;
   }
 }
 
 class AppColors {
-  static const Color primary = Color(0xFF2196F3);
-  static const Color primaryDark = Color(0xFF1976D2);
-  static const Color accent = Color(0xFFFF9800);
-  
-  static const Color background = Color(0xFF1A1A2E);
-  static const Color surface = Color(0xFF16213E);
-  static const Color surfaceLight = Color(0xFF0F3460);
-  
-  static const Color text = Color(0xFFE8E8E8);
-  static const Color textSecondary = Color(0xFFB0B0B0);
-  
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFF44336);
-  
-  static const Color starFilled = Color(0xFFFFD700);
-  static const Color starEmpty = Color(0xFF4A4A4A);
-  
-  static const Color coinColor = Color(0xFFFFD700);
-  static const Color lifeColor = Color(0xFFE91E63);
+  static const Color primary = VerkstadTokens.blockBlue;
+  static const Color primaryDark = Color(0xFF1E3F54);
+  static const Color accent = VerkstadTokens.brassPin;
 
-  static const Color gridCell = Color(0xFF2A2A4A);
-  static const Color gridBorder = Color(0xFF3A3A6A);
-  static const Color wall = Color(0xFF4A4A6A);
+  static const Color background = VerkstadTokens.benchBirch;
+  static const Color surface = VerkstadTokens.maskingTape;
+  static const Color surfaceLight = VerkstadTokens.benchBirch;
+
+  static const Color text = VerkstadTokens.ink;
+  static const Color textSecondary = Color(0xFF5C4A3A);
+
+  static const Color success = VerkstadTokens.blockGreen;
+  static const Color warning = VerkstadTokens.blockYellow;
+  static const Color error = VerkstadTokens.blockRed;
+
+  static const Color starFilled = VerkstadTokens.brassPin;
+  static const Color starEmpty = Color(0xFF8A7A68);
+
+  static const Color coinColor = VerkstadTokens.brassPin;
+  static const Color lifeColor = VerkstadTokens.blockRed;
+
+  static const Color gridCell = Colors.transparent;
+  static const Color gridBorder = VerkstadTokens.gridLine;
+  static const Color wall = VerkstadTokens.pencil;
 }
 
 class WorldThemes {
   static const Map<int, WorldTheme> themes = {
     1: WorldTheme(
       name: 'Lagret',
-      primaryColor: Color(0xFF8D6E63),
-      backgroundColor: Color(0xFF3E2723),
-      accentColor: Color(0xFFFFCC80),
+      primaryColor: VerkstadTokens.blockRed,
+      backgroundColor: VerkstadTokens.world1Bench,
+      accentColor: VerkstadTokens.maskingTape,
+      benchSeed: 3,
     ),
     2: WorldTheme(
       name: 'Valvet',
-      primaryColor: Color(0xFF546E7A),
-      backgroundColor: Color(0xFF263238),
-      accentColor: Color(0xFFB0BEC5),
+      primaryColor: VerkstadTokens.brassPin,
+      backgroundColor: VerkstadTokens.world2Bench,
+      accentColor: VerkstadTokens.maskingTape,
+      benchSeed: 17,
     ),
     3: WorldTheme(
       name: 'Hamnen',
-      primaryColor: Color(0xFF0288D1),
-      backgroundColor: Color(0xFF01579B),
-      accentColor: Color(0xFF81D4FA),
+      primaryColor: VerkstadTokens.blockBlue,
+      backgroundColor: VerkstadTokens.world3Bench,
+      accentColor: VerkstadTokens.maskingTape,
+      benchSeed: 29,
     ),
   };
 
@@ -96,11 +99,13 @@ class WorldTheme {
   final Color primaryColor;
   final Color backgroundColor;
   final Color accentColor;
+  final int benchSeed;
 
   const WorldTheme({
     required this.name,
     required this.primaryColor,
     required this.backgroundColor,
     required this.accentColor,
+    this.benchSeed = 1,
   });
 }
