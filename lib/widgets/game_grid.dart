@@ -13,6 +13,8 @@ class GameGrid extends StatelessWidget {
   final void Function(String blockId)? onBlockPress;
   final double cellSize;
   final int world;
+  final String? pulsedBlockId;
+  final int pulseSerial;
 
   const GameGrid({
     super.key,
@@ -21,6 +23,8 @@ class GameGrid extends StatelessWidget {
     this.onBlockPress,
     this.cellSize = 50,
     this.world = 1,
+    this.pulsedBlockId,
+    this.pulseSerial = 0,
   });
 
   @override
@@ -56,15 +60,23 @@ class GameGrid extends StatelessWidget {
                 offset: gateThickness,
               ),
             ),
-            ...gameState.blocks.map((block) => BlockWidget(
-                  block: block,
-                  cellSize: cellSize,
-                  offsetX: gateThickness,
-                  offsetY: gateThickness,
-                  isLocked: gameState.isBlockLocked(block),
-                  onTap: () => onBlockTap(block.id),
-                  onPressDown: () => onBlockPress?.call(block.id),
-                )),
+            ...gameState.blocks.map((block) {
+              final key = gameState.blockById(block.lockKeyBlockId);
+              final pulseThis = pulsedBlockId == block.id;
+              return BlockWidget(
+                key: ValueKey('block-${block.id}'),
+                block: block,
+                cellSize: cellSize,
+                offsetX: gateThickness,
+                offsetY: gateThickness,
+                isLocked: gameState.isBlockLocked(block),
+                keyReadyToExit: gameState.isKeyReadyToExit(block),
+                keyColorName: key?.color,
+                pulseSerial: pulseThis ? pulseSerial : 0,
+                onTap: () => onBlockTap(block.id),
+                onPressDown: () => onBlockPress?.call(block.id),
+              );
+            }),
           ],
         ),
       ),

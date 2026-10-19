@@ -1,7 +1,7 @@
 name: blockshade
 description: "Blockshade - A mobile block puzzle with the shadow block twist"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0-test7+7
 
 environment:
   sdk: ^3.13.5

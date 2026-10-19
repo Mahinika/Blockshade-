@@ -10,80 +10,16 @@ import 'theme/app_typography.dart';
 import 'utils/colors.dart';
 import 'utils/localization.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await HapticService.instance.load();
-  await SoundService.instance.init();
-
-  try {
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-  } catch (e) {
-    debugPrint('Orientation lock error: $e');
-  }
-
-  // Initialize Firebase (optional - may not have google-services.json)
-  bool firebaseAvailable = false;
-  try {
-    await Firebase.initializeApp();
-    firebaseAvailable = true;
-    debugPrint('Firebase initialized successfully');
-  } catch (e) {
-    debugPrint('Firebase init skipped (no google-services.json): $e');
-  }
-
-  // Storage service - required, but guard anyway
   final storageService = StorageService();
-  try {
-    await storageService.init();
-  } catch (e) {
-    debugPrint('Storage service init error: $e');
-  }
-
-  // Remote config - optional, uses defaults if Firebase unavailable
   final remoteConfigService = RemoteConfigService();
-  if (firebaseAvailable) {
-    try {
-      await remoteConfigService.init();
-    } catch (e) {
-      debugPrint('Remote config init error: $e');
-    }
-  }
-
-  // Analytics - optional
   final analyticsService = AnalyticsService();
-  if (firebaseAvailable) {
-    try {
-      await analyticsService.init();
-    } catch (e) {
-      debugPrint('Analytics init error: $e');
-    }
-  }
-
-  // Level service - required for game
   final levelService = LevelService();
-
   final dailyPuzzleService = DailyPuzzleService();
-  try {
-    await dailyPuzzleService.init();
-  } catch (e) {
-    debugPrint('Daily puzzle service init error: $e');
-  }
-
   final onboardingService = OnboardingService();
-  try {
-    await onboardingService.init();
-  } catch (e) {
-    debugPrint('Onboarding service init error: $e');
-  }
-
-  // Ad service - optional
   final adService = AdService(remoteConfigService);
-
-  // IAP service - optional
   final iapService = IAPService();
 
   runApp(
@@ -125,16 +61,82 @@ class _BlockshadeAppState extends State<BlockshadeApp> {
   @override
   void initState() {
     super.initState();
-    _initializeServices();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeServices();
+    });
   }
 
   Future<void> _initializeServices() async {
+    final storageService = context.read<StorageService>();
+    final remoteConfigService = context.read<RemoteConfigService>();
+    final analyticsService = context.read<AnalyticsService>();
+    final dailyPuzzleService = context.read<DailyPuzzleService>();
+    final onboardingService = context.read<OnboardingService>();
+    final adService = context.read<AdService>();
+    final iapService = context.read<IAPService>();
+    final gameProvider = context.read<GameProvider>();
+
     try {
-      final adService = context.read<AdService>();
-      final iapService = context.read<IAPService>();
-      final gameProvider = context.read<GameProvider>();
-      final storageService = context.read<StorageService>();
-      final analyticsService = context.read<AnalyticsService>();
+      try {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ]);
+      } catch (e) {
+        debugPrint('Orientation lock error: $e');
+      }
+
+      try {
+        await HapticService.instance.load();
+      } catch (e) {
+        debugPrint('Haptic init error (non-fatal): $e');
+      }
+
+      try {
+        await SoundService.instance.init();
+      } catch (e) {
+        debugPrint('Sound init error (non-fatal): $e');
+      }
+
+      var firebaseAvailable = false;
+      try {
+        await Firebase.initializeApp();
+        firebaseAvailable = true;
+        debugPrint('Firebase initialized successfully');
+      } catch (e) {
+        debugPrint('Firebase init skipped (no google-services.json): $e');
+      }
+
+      try {
+        await storageService.init();
+      } catch (e) {
+        debugPrint('Storage service init error: $e');
+      }
+
+      if (firebaseAvailable) {
+        try {
+          await remoteConfigService.init();
+        } catch (e) {
+          debugPrint('Remote config init error: $e');
+        }
+        try {
+          await analyticsService.init();
+        } catch (e) {
+          debugPrint('Analytics init error: $e');
+        }
+      }
+
+      try {
+        await dailyPuzzleService.init();
+      } catch (e) {
+        debugPrint('Daily puzzle service init error: $e');
+      }
+
+      try {
+        await onboardingService.init();
+      } catch (e) {
+        debugPrint('Onboarding service init error: $e');
+      }
 
       // Initialize ads - guard against missing AdMob config
       try {

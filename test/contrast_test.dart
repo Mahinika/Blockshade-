@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:blockshade/theme/verkstad_tokens.dart';
 import 'package:blockshade/utils/colors.dart';
+import 'package:blockshade/widgets/padlock_painter.dart';
 
 double _relativeLuminance(Color c) {
   double channel(double v) {
@@ -41,6 +42,17 @@ void main() {
         expect(ratio, greaterThanOrEqualTo(3.0));
       }
     }
+  });
+
+  test('Låsmönster mot nyckelfärg ≥ 3:1', () {
+    final colors = ['red', 'blue', 'yellow', 'green', 'purple', 'orange', 'cyan', 'pink'];
+    for (final name in colors) {
+      final ratio = contrastRatio(lockPatternColor(name), BlockColors.getBlockColor(name));
+      expect(ratio, greaterThanOrEqualTo(3.0), reason: name);
+    }
+    expect(lockPatternColor('yellow'), const Color(0xFF1A120C));
+    expect(lockPatternColor('orange'), const Color(0xFF000000));
+    expect(lockPatternColor('blue'), const Color(0xFFFFF8EC));
   });
 
   test('Skrafferingslinje mot björk ≥ 3:1', () {

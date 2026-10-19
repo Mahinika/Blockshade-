@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../theme/app_typography.dart';
 import '../theme/verkstad_tokens.dart';
 
 /// UI-label som maskeringstejp med nål i hörnet.
@@ -29,9 +30,10 @@ class MaskingTape extends StatelessWidget {
           width: width,
           padding: padding,
           child: DefaultTextStyle(
-            style: const TextStyle(
+            style: TextStyle(
               color: VerkstadTokens.ink,
               fontWeight: FontWeight.w600,
+              fontVariations: AppTypography.recursiveVariations(600),
             ),
             child: child,
           ),

@@ -55,7 +55,8 @@ class AppLocalizations {
       'tutorial_direction': 'Blocket rör sig åt pilens håll',
       'tutorial_exit': 'Flytta ut alla block ur banan',
       'tutorial_echo': 'Skuggblock lämnar en skugga i 2 drag',
-      'tutorial_lock': 'Upplås det låsta blocket först',
+      'tutorial_lock':
+          'Låset öppnas när klossen med samma färg och mönster lämnar banan.',
       'tutorial_gate': 'Bara rätt färg passerar porten',
       'world_1_name': 'Lagret',
       'world_2_name': 'Valvet',
@@ -115,7 +116,8 @@ class AppLocalizations {
       'tutorial_direction': 'The block moves in the arrow direction',
       'tutorial_exit': 'Move all blocks out of the grid',
       'tutorial_echo': 'Shadow blocks leave a shadow for 2 moves',
-      'tutorial_lock': 'Unlock the locked block first',
+      'tutorial_lock':
+          'The lock opens when the block with the same color and pattern leaves the board.',
       'tutorial_gate': 'Only matching colors pass the gate',
       'world_1_name': 'The Warehouse',
       'world_2_name': 'The Vault',
@@ -199,6 +201,40 @@ class AppLocalizations {
   String get tutorialDirection => translate('tutorial_direction');
   String get tutorialExit => translate('tutorial_exit');
   String get tutorialEcho => translate('tutorial_echo');
+  String get tutorialLock => translate('tutorial_lock');
+
+  /// Toast when a locked block is tapped. Swedish: "Få ut den blå klossen först".
+  String lockKeyFirst(String colorName) {
+    final name = _colorAdjective(colorName);
+    if (locale.languageCode == 'en') {
+      return 'Get the $name block out first';
+    }
+    return 'Få ut den $name klossen först';
+  }
+
+  String _colorAdjective(String colorName) {
+    final english = locale.languageCode == 'en';
+    switch (colorName.toLowerCase()) {
+      case 'red':
+        return english ? 'red' : 'röda';
+      case 'blue':
+        return english ? 'blue' : 'blå';
+      case 'yellow':
+        return english ? 'yellow' : 'gula';
+      case 'green':
+        return english ? 'green' : 'gröna';
+      case 'purple':
+        return english ? 'purple' : 'lila';
+      case 'orange':
+        return english ? 'orange' : 'orange';
+      case 'cyan':
+        return english ? 'cyan' : 'turkosa';
+      case 'pink':
+        return english ? 'pink' : 'rosa';
+      default:
+        return colorName;
+    }
+  }
 
   String worldName(int worldNum) {
     return translate('world_${worldNum}_name');

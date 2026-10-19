@@ -145,6 +145,75 @@ void main() {
       expect(afterUnlocking.isBlockLocked(afterUnlocking.blocks[0]), false);
     });
 
+    test('key is ready to exit only when its path is clear, and the lock opens on that exit', () {
+      final ready = Level(
+        id: 'ready-lock',
+        world: 2,
+        grid: const GridSize(5, 5),
+        moveLimit: 6,
+        blocks: [
+          Block(
+            id: 'a',
+            color: 'blue',
+            cells: [const BlockCell(0, 1)],
+            direction: Direction.up,
+          ),
+          Block(
+            id: 'b',
+            color: 'red',
+            cells: [const BlockCell(3, 1)],
+            direction: Direction.up,
+            lockKeyBlockId: 'a',
+          ),
+        ],
+      );
+      final state = GameState.fromLevel(ready);
+      final locked = state.blocks.firstWhere((block) => block.id == 'b');
+      expect(state.isBlockLocked(locked), isTrue);
+      expect(state.isKeyReadyToExit(locked), isTrue);
+      expect(state.tryMoveBlock('b')?.result, MoveResult.blocked);
+      expect(state.tryMoveBlock('a')?.result, MoveResult.exit);
+
+      final opened = state.applyMove('a');
+      final stillThere = opened.blocks.single;
+      expect(stillThere.id, 'b');
+      expect(opened.isBlockLocked(stillThere), isFalse);
+      expect(opened.isKeyReadyToExit(stillThere), isFalse);
+
+      final blockedPath = Level(
+        id: 'blocked-key',
+        world: 2,
+        grid: const GridSize(5, 5),
+        moveLimit: 6,
+        blocks: [
+          Block(
+            id: 'a',
+            color: 'blue',
+            cells: [const BlockCell(0, 2)],
+            direction: Direction.up,
+          ),
+          Block(
+            id: 'c',
+            color: 'green',
+            cells: [const BlockCell(0, 0)],
+            direction: Direction.left,
+          ),
+          Block(
+            id: 'b',
+            color: 'red',
+            cells: [const BlockCell(3, 3)],
+            direction: Direction.down,
+            lockKeyBlockId: 'a',
+          ),
+        ],
+      );
+      final crowded = GameState.fromLevel(blockedPath);
+      final waiting = crowded.blocks.firstWhere((block) => block.id == 'b');
+      expect(crowded.tryMoveBlock('a')?.result, isNot(MoveResult.exit));
+      expect(crowded.isKeyReadyToExit(waiting), isFalse);
+      expect(crowded.tryMoveBlock('b')?.result, MoveResult.blocked);
+    });
+
     test('creates echo shadows', () {
       final echoLevel = Level(
         id: 'echo-test',
