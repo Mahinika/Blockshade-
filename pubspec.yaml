@@ -42,6 +42,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  fonts:
+    - family: PatrickHand
+      fonts:
+        - asset: assets/fonts/PatrickHand-Regular.ttf
+    - family: Recursive
+      fonts:
+        - asset: assets/fonts/Recursive-Variable.ttf
   
   assets:
     - assets/levels/

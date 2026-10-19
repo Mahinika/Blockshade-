@@ -3,8 +3,12 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/game_provider.dart';
 import '../services/services.dart';
+import '../theme/verkstad_tokens.dart';
 import '../utils/colors.dart';
 import '../utils/localization.dart';
+import '../widgets/brass_star.dart';
+import '../widgets/masking_tape.dart';
+import '../widgets/workshop_background.dart';
 import 'game_screen.dart';
 
 class WorldMapScreen extends StatefulWidget {
@@ -44,49 +48,35 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
     return Scaffold(
       backgroundColor: theme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: theme.primaryColor,
-        title: Text('${l10n.world} ${widget.world}: ${theme.name}'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: MaskingTape(
+          showPin: true,
+          child: Text('${l10n.world} ${widget.world}: ${theme.name}'),
+        ),
         actions: [
-          _buildResourceChip(
-            Icons.star,
-            '${provider.progress.getStarsForWorld(widget.world)}',
-            AppColors.starFilled,
-          ),
-          const SizedBox(width: 8),
-          _buildResourceChip(
-            Icons.monetization_on,
-            '${provider.progress.coins}',
-            AppColors.coinColor,
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _buildLevelGrid(provider, l10n),
-    );
-  }
-
-  Widget _buildResourceChip(IconData icon, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.text,
-              fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: MaskingTape(
+              showPin: false,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BrassStar(filled: true, size: 16),
+                  const SizedBox(width: 4),
+                  Text('${provider.progress.getStarsForWorld(widget.world)}'),
+                ],
+              ),
             ),
           ),
         ],
+      ),
+      body: WorkshopBackground(
+        world: widget.world,
+        seed: theme.benchSeed,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : _buildLevelGrid(provider, l10n),
       ),
     );
   }
@@ -138,27 +128,20 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
     required bool isCompleted,
     VoidCallback? onTap,
   }) {
-    final theme = WorldThemes.getTheme(widget.world);
     final isBoss = levelNum == 20;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: isUnlocked ? theme.primaryColor : Colors.grey.shade700,
-          borderRadius: BorderRadius.circular(12),
-          border: isBoss
-              ? Border.all(color: AppColors.warning, width: 3)
-              : null,
-          boxShadow: isUnlocked
-              ? [
-                  BoxShadow(
-                    color: theme.primaryColor.withOpacity(0.4),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
+          color: isUnlocked
+              ? AppColors.surface.withValues(alpha: 0.92)
+              : VerkstadTokens.pencil.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isBoss ? AppColors.warning : VerkstadTokens.pencil.withValues(alpha: 0.35),
+            width: isBoss ? 2 : 1,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -183,11 +166,7 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(3, (i) {
-                  return Icon(
-                    i < stars ? Icons.star : Icons.star_border,
-                    color: AppColors.starFilled,
-                    size: 14,
-                  );
+                  return BrassStar(filled: i < stars, size: 12);
                 }),
               ),
             ],

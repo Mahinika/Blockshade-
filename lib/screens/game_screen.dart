@@ -5,7 +5,12 @@ import '../providers/game_provider.dart';
 import '../services/services.dart';
 import '../utils/colors.dart';
 import '../utils/localization.dart';
+import '../theme/app_typography.dart';
+import '../theme/verkstad_tokens.dart';
+import '../widgets/brass_star.dart';
 import '../widgets/game_grid.dart';
+import '../widgets/masking_tape.dart';
+import '../widgets/workshop_background.dart';
 
 class GameScreen extends StatefulWidget {
   final String levelId;
@@ -18,6 +23,9 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   int _failCount = 0;
+  bool _wasWon = false;
+  bool _wasLost = false;
+  final _juiceKey = GlobalKey<JuiceOverlayState>();
 
   @override
   void initState() {
@@ -43,73 +51,80 @@ class _GameScreenState extends State<GameScreen> {
 
     final theme = WorldThemes.getTheme(level.world);
 
+    if (provider.isWon && !_wasWon) {
+      _wasWon = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _juiceKey.currentState?.onWin();
+      });
+    }
+    if (provider.isLost && !_wasLost) {
+      _wasLost = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _juiceKey.currentState?.onFail();
+      });
+    }
+
     return Scaffold(
       backgroundColor: theme.backgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(provider, level, l10n, theme),
-            Expanded(
-              child: Center(
-                child: _buildGameArea(provider, gameState),
+      body: WorkshopBackground(
+        world: level.world,
+        seed: theme.benchSeed,
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(provider, level, l10n, theme),
+              Expanded(
+                child: Center(
+                  child: _buildGameArea(provider, gameState, level.world),
+                ),
               ),
-            ),
-            _buildFooter(provider, l10n),
-          ],
+              _buildFooter(provider, l10n),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader(GameProvider provider, Level level, AppLocalizations l10n, WorldTheme theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.close, color: AppColors.text),
+          MaskingTapeButton(
+            label: '✕',
             onPressed: () => _showQuitDialog(provider, l10n),
           ),
-          
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              children: [
-                Text(
-                  '${l10n.world} ${level.world} - ${l10n.level} ${level.levelNumber}',
-                  style: TextStyle(
-                    color: theme.accentColor,
-                    fontSize: 14,
+            child: MaskingTape(
+              rotation: 0.01,
+              child: Column(
+                children: [
+                  Text(
+                    '${l10n.world} ${level.world} · ${l10n.level} ${level.levelNumber}',
+                    style: const TextStyle(fontSize: 13),
                   ),
-                ),
-                Text(
-                  theme.name,
-                  style: const TextStyle(
-                    color: AppColors.text,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    theme.name,
+                    style: const TextStyle(fontSize: 17),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          
-          Container(
+          const SizedBox(width: 8),
+          MaskingTape(
+            rotation: -0.03,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-            ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.swap_horiz, color: AppColors.text, size: 20),
+                const Icon(Icons.edit, size: 18, color: VerkstadTokens.ink),
                 const SizedBox(width: 4),
                 Text(
                   '${provider.movesRemaining}',
-                  style: const TextStyle(
-                    color: AppColors.text,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.moveCounter(18),
                 ),
               ],
             ),
@@ -119,7 +134,7 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _buildGameArea(GameProvider provider, GameState gameState) {
+  Widget _buildGameArea(GameProvider provider, GameState gameState, int world) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final level = gameState.level;
@@ -131,25 +146,31 @@ class _GameScreenState extends State<GameScreen> {
     final cellSizeByHeight = maxGridHeight / (level.grid.height + 0.5);
     final cellSize = cellSizeByWidth < cellSizeByHeight ? cellSizeByWidth : cellSizeByHeight;
 
-    return Stack(
-      children: [
-        GameGrid(
-          gameState: gameState,
-          cellSize: cellSize,
-          onBlockTap: (blockId) => _onBlockTap(provider, blockId),
-        ),
-        
-        if (provider.isWon)
-          _buildWinOverlay(provider),
-        
-        if (provider.isLost)
-          _buildLoseOverlay(provider),
-      ],
+    return JuiceOverlay(
+      key: _juiceKey,
+      child: Stack(
+        children: [
+          GameGrid(
+            gameState: gameState,
+            cellSize: cellSize,
+            world: world,
+            onBlockTap: (blockId) => _onBlockTap(provider, blockId),
+            onBlockPress: (_) => _juiceKey.currentState?.onBlockPress(),
+          ),
+          if (provider.isWon) _buildWinOverlay(provider),
+          if (provider.isLost) _buildLoseOverlay(provider),
+        ],
+      ),
     );
   }
 
   void _onBlockTap(GameProvider provider, String blockId) {
     if (provider.isGameOver) return;
+    final state = provider.gameState;
+    if (state == null) return;
+    final outcome = state.tryMoveBlock(blockId);
+    if (outcome == null || outcome.result == MoveResult.blocked) return;
+    _juiceKey.currentState?.onMoveOutcome(outcome, outcome.block.color);
     provider.makeMove(blockId);
   }
 
@@ -157,48 +178,36 @@ class _GameScreenState extends State<GameScreen> {
     final l10n = AppLocalizations.of(context);
     
     return Container(
-      color: Colors.black54,
+      color: VerkstadTokens.pencil.withValues(alpha: 0.45),
       child: Center(
-        child: Card(
-          color: AppColors.surface,
-          margin: const EdgeInsets.all(32),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.celebration, color: AppColors.starFilled, size: 64),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.levelComplete,
-                  style: const TextStyle(
-                    color: AppColors.text,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MaskingTape(
+                rotation: -0.04,
+                child: Text(
+                  '✓ ${l10n.levelComplete}',
+                  style: const TextStyle(fontSize: 22),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(3, (i) {
-                    return Icon(
-                      i < provider.stars ? Icons.star : Icons.star_border,
-                      color: AppColors.starFilled,
-                      size: 40,
-                    );
-                  }),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
-                  onPressed: () => _goToNextLevel(provider),
-                  child: Text(l10n.nextLevel),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (i) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: BrassStar(filled: i < provider.stars, size: 36),
+                  );
+                }),
+              ),
+              const SizedBox(height: 24),
+              MaskingTapeButton(
+                label: l10n.nextLevel,
+                onPressed: () => _goToNextLevel(provider),
+              ),
+            ],
           ),
         ),
       ),
@@ -322,23 +331,15 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Widget _buildResourceDisplay(IconData icon, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return MaskingTape(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      showPin: false,
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 20),
+          Icon(icon, color: color, size: 18),
           const SizedBox(width: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.text,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text(value, style: AppTypography.moveCounter(15)),
         ],
       ),
     );

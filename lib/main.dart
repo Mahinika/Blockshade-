@@ -6,11 +6,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'providers/game_provider.dart';
 import 'services/services.dart';
 import 'screens/screens.dart';
+import 'theme/app_typography.dart';
 import 'utils/colors.dart';
 import 'utils/localization.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await HapticService.instance.load();
+  await SoundService.instance.init();
 
   try {
     await SystemChrome.setPreferredOrientations([
@@ -176,24 +180,32 @@ class _BlockshadeAppState extends State<BlockshadeApp> {
       title: 'Blockshade',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
+        useMaterial3: true,
+        brightness: Brightness.light,
         primaryColor: AppColors.primary,
         scaffoldBackgroundColor: AppColors.background,
-        colorScheme: const ColorScheme.dark(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.light,
           primary: AppColors.primary,
           secondary: AppColors.accent,
           surface: AppColors.surface,
+          onSurface: AppColors.text,
         ),
-        appBarTheme: const AppBarTheme(
+        textTheme: AppTypography.textTheme(ThemeData.light().textTheme),
+        appBarTheme: AppBarTheme(
           backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.text,
           elevation: 0,
+          titleTextStyle: AppTypography.textTheme(ThemeData.light().textTheme).titleLarge,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
+            foregroundColor: AppColors.text,
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(4),
             ),
           ),
         ),
@@ -219,30 +231,14 @@ class _SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.grid_view_rounded,
-                size: 80,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
+            Text(
               'Blockshade',
-              style: TextStyle(
-                color: AppColors.text,
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 32),
-            const CircularProgressIndicator(
+            CircularProgressIndicator(
               color: AppColors.primary,
+              strokeWidth: 2,
             ),
           ],
         ),

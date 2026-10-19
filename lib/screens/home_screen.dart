@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
+import '../services/haptic_service.dart';
+import '../services/sound_service.dart';
+import '../theme/verkstad_tokens.dart';
 import '../utils/colors.dart';
 import '../utils/localization.dart';
+import '../widgets/brass_star.dart';
+import '../widgets/masking_tape.dart';
+import '../widgets/workshop_background.dart';
 import 'world_map_screen.dart';
 import 'shop_screen.dart';
 
@@ -16,24 +22,27 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(provider, l10n),
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildLogo(),
-                    const SizedBox(height: 48),
-                    _buildPlayButton(context, l10n),
-                  ],
+      body: WorkshopBackground(
+        world: 1,
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(provider, l10n),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLogo(context),
+                      const SizedBox(height: 40),
+                      _buildPlayButtons(context, l10n),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            _buildFooter(context, l10n),
-          ],
+              _buildFooter(context, l10n),
+            ],
+          ),
         ),
       ),
     );
@@ -45,45 +54,27 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildResourceDisplay(
-            Icons.favorite,
-            '${provider.progress.currentLives}/$maxLives',
-            AppColors.lifeColor,
-          ),
-          _buildResourceDisplay(
-            Icons.monetization_on,
-            '${provider.progress.coins}',
-            AppColors.coinColor,
-          ),
-          _buildResourceDisplay(
-            Icons.star,
-            '${provider.progress.totalStars}',
-            AppColors.starFilled,
-          ),
+          _buildResourceTape(Icons.favorite, '${provider.progress.currentLives}/$maxLives', AppColors.lifeColor),
+          _buildResourceTape(Icons.monetization_on, '${provider.progress.coins}', AppColors.coinColor),
+          _buildResourceTape(Icons.star, '${provider.progress.totalStars}', AppColors.starFilled, star: true),
         ],
       ),
     );
   }
 
-  Widget _buildResourceDisplay(IconData icon, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-      ),
+  Widget _buildResourceTape(IconData icon, String value, Color color, {bool star = false}) {
+    return MaskingTape(
+      showPin: false,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 20),
+          if (star)
+            const BrassStar(filled: true, size: 16)
+          else
+            Icon(icon, color: color, size: 18),
           const SizedBox(width: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.text,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
+          Text(value),
         ],
       ),
     );
@@ -91,101 +82,72 @@ class HomeScreen extends StatelessWidget {
 
   static const int maxLives = 5;
 
-  Widget _buildLogo() {
+  Widget _buildLogo(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Icon(
-            Icons.grid_view_rounded,
-            size: 80,
-            color: AppColors.primary,
+        MaskingTape(
+          rotation: -0.02,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          child: Text(
+            'Blockshade',
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
-          'Blockshade',
-          style: TextStyle(
-            color: AppColors.text,
-            fontSize: 42,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
+        const SizedBox(height: 12),
+        MaskingTape(
+          showPin: false,
+          rotation: 0.03,
+          child: const Text(
+            'Trä, papper och skuggor',
+            style: TextStyle(fontSize: 14),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPlayButton(BuildContext context, AppLocalizations l10n) {
+  Widget _buildPlayButtons(BuildContext context, AppLocalizations l10n) {
     return Column(
       children: [
-        _buildWorldButton(context, 1, l10n.worldName(1), AppColors.primary),
-        const SizedBox(height: 16),
-        _buildWorldButton(context, 2, l10n.worldName(2), Colors.teal),
-        const SizedBox(height: 16),
-        _buildWorldButton(context, 3, l10n.worldName(3), Colors.indigo),
+        _buildWorldButton(context, 1, l10n.worldName(1)),
+        const SizedBox(height: 14),
+        _buildWorldButton(context, 2, l10n.worldName(2)),
+        const SizedBox(height: 14),
+        _buildWorldButton(context, 3, l10n.worldName(3)),
       ],
     );
   }
 
-  Widget _buildWorldButton(BuildContext context, int world, String name, Color color) {
+  Widget _buildWorldButton(BuildContext context, int world, String name) {
     final provider = context.read<GameProvider>();
     final stars = provider.progress.getStarsForWorld(world);
     final maxStars = 20 * 3;
 
-    return SizedBox(
-      width: 250,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+    return Column(
+      children: [
+        SizedBox(
+          width: 260,
+          child: MaskingTapeButton(
+            label: name,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WorldMapScreen(world: world),
+                ),
+              );
+            },
           ),
         ),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => WorldMapScreen(world: world),
-            ),
-          );
-        },
-        child: Column(
-          children: [
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.star, size: 16, color: AppColors.starFilled),
-                const SizedBox(width: 4),
-                Text(
-                  '$stars / $maxStars',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
-          ],
+        const SizedBox(height: 4),
+        Text(
+          '$stars / $maxStars',
+          style: TextStyle(
+            color: VerkstadTokens.ink.withValues(alpha: 0.7),
+            fontSize: 12,
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -195,51 +157,20 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildFooterButton(
-            context,
-            Icons.shopping_bag,
-            l10n.shop,
-            () => Navigator.push(
+          MaskingTapeButton(
+            label: l10n.shop,
+            icon: Icons.shopping_bag_outlined,
+            onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ShopScreen()),
             ),
           ),
-          _buildFooterButton(
-            context,
-            Icons.settings,
-            l10n.settings,
-            () => _showSettingsDialog(context, l10n),
+          MaskingTapeButton(
+            label: l10n.settings,
+            icon: Icons.tune,
+            onPressed: () => _showSettingsDialog(context, l10n),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFooterButton(
-    BuildContext context,
-    IconData icon,
-    String label,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: AppColors.text, size: 28),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(color: AppColors.text, fontSize: 14),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -248,14 +179,20 @@ class HomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: VerkstadTokens.maskingTape,
         title: Text(l10n.settings, style: const TextStyle(color: AppColors.text)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildSettingRow(l10n.sound, true, (v) {}),
-            _buildSettingRow(l10n.music, true, (v) {}),
-            _buildSettingRow(l10n.vibration, true, (v) {}),
+            _buildSettingRow(l10n.sound, SoundService.instance.sfxEnabled, (v) {
+              SoundService.instance.setSfxEnabled(v);
+            }),
+            _buildSettingRow(l10n.music, SoundService.instance.musicEnabled, (v) {
+              SoundService.instance.setMusicEnabled(v);
+            }),
+            _buildSettingRow(l10n.vibration, HapticService.instance.isEnabled, (v) {
+              HapticService.instance.setEnabled(v);
+            }),
           ],
         ),
         actions: [
@@ -278,7 +215,7 @@ class HomeScreen extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
+            activeThumbColor: VerkstadTokens.brassPin,
           ),
         ],
       ),
