@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+import '../config/admob_config.dart';
 import '../providers/game_provider.dart';
 import '../screens/startup_error_screen.dart';
 import '../screens/screens.dart';
@@ -64,6 +65,7 @@ Widget buildBlockshadeApp({
   required OnboardingService onboardingService,
   required AdService adService,
   required IAPService iapService,
+  required ConsentCoordinator consentCoordinator,
 }) {
   return MultiProvider(
     providers: [
@@ -74,15 +76,20 @@ Widget buildBlockshadeApp({
       Provider<DailyPuzzleService>.value(value: dailyPuzzleService),
       Provider<OnboardingService>.value(value: onboardingService),
       Provider<AdService>.value(value: adService),
-      Provider<IAPService>.value(value: iapService),
+      ChangeNotifierProvider<IAPService>.value(value: iapService),
+      Provider<ConsentCoordinator>.value(value: consentCoordinator),
       ChangeNotifierProvider<GameProvider>(
-        create: (context) => GameProvider(
-          levelService: levelService,
-          storageService: storageService,
-          analyticsService: analyticsService,
-          remoteConfig: remoteConfigService,
-          dailyPuzzleService: dailyPuzzleService,
-        ),
+        create: (context) {
+          final game = GameProvider(
+            levelService: levelService,
+            storageService: storageService,
+            analyticsService: analyticsService,
+            remoteConfig: remoteConfigService,
+            dailyPuzzleService: dailyPuzzleService,
+          );
+          context.read<IAPService>().onGrant = game.applyIapGrant;
+          return game;
+        },
       ),
     ],
     child: const BlockshadeApp(),
@@ -114,16 +121,34 @@ class _BlockshadeBootstrapState extends State<BlockshadeBootstrap> {
     });
   }
 
-  void _mountFullAppAfterFirstFrame() {
+  Future<void> _mountFullAppAfterFirstFrame() async {
     try {
+      AdMobConfig adConfig = AdMobConfig.test;
+      try {
+        final raw = await rootBundle.loadString('config/admob.json');
+        adConfig = AdMobConfig.resolve(jsonText: raw);
+      } catch (e) {
+        debugPrint('AdMob config asset unavailable, using test ids: $e');
+        adConfig = AdMobConfig.resolve();
+      }
+
       final storageService = StorageService();
       final remoteConfigService = RemoteConfigService();
       final analyticsService = AnalyticsService();
       final levelService = LevelService();
       final dailyPuzzleService = DailyPuzzleService();
       final onboardingService = OnboardingService();
-      final adService = AdService(remoteConfigService);
-      final iapService = IAPService();
+      final adService = AdService(
+        remoteConfigService,
+        analytics: analyticsService,
+        quotaStore: storageService,
+        config: adConfig,
+      );
+      final iapService = IAPService(
+        analytics: analyticsService,
+        store: storageService,
+      );
+      final consentCoordinator = ConsentCoordinator(analytics: analyticsService);
 
       if (!mounted) return;
       setState(() {
@@ -136,6 +161,7 @@ class _BlockshadeBootstrapState extends State<BlockshadeBootstrap> {
           onboardingService: onboardingService,
           adService: adService,
           iapService: iapService,
+          consentCoordinator: consentCoordinator,
         );
       });
 
@@ -146,6 +172,7 @@ class _BlockshadeBootstrapState extends State<BlockshadeBootstrap> {
           analyticsService: analyticsService,
           adService: adService,
           iapService: iapService,
+          consentCoordinator: consentCoordinator,
         ),
       );
     } catch (e, stack) {
@@ -159,6 +186,7 @@ class _BlockshadeBootstrapState extends State<BlockshadeBootstrap> {
     required AnalyticsService analyticsService,
     required AdService adService,
     required IAPService iapService,
+    required ConsentCoordinator consentCoordinator,
   }) async {
     const timeout = Duration(seconds: 4);
 
@@ -200,26 +228,48 @@ class _BlockshadeBootstrapState extends State<BlockshadeBootstrap> {
 
     if (firebaseOk) {
       await startupWithTimeoutVoid(
-        remoteConfigService.init(),
-        timeout: timeout,
-        debugLabel: 'remote_config',
-      );
-      await startupWithTimeoutVoid(
         analyticsService.init(),
         timeout: timeout,
         debugLabel: 'analytics',
       );
     }
 
-    await startupWithTimeoutVoid(
-      adService.init(),
-      timeout: timeout,
-      debugLabel: 'ads',
-    );
+    // UMP, then consent mode v2. The form waits for the player, so it is not
+    // inside the short startup timeout. Ads stay unloaded until canRequestAds.
+    final decision = await consentCoordinator.gather(source: 'first_launch');
+    adService.setAdsAllowed(decision.canRequestAds);
+
+    if (firebaseOk) {
+      await startupWithTimeoutVoid(
+        remoteConfigService.init(),
+        timeout: timeout,
+        debugLabel: 'remote_config',
+      );
+      if (analyticsService.collectionEnabled) {
+        try {
+          final daysSinceInstall = await storageService.getDaysSinceInstall();
+          final isFirstOpen = await storageService.isFirstOpen();
+          await analyticsService.logAppOpen(
+            firstOpen: isFirstOpen,
+            daysSinceInstall: daysSinceInstall,
+          );
+        } catch (e) {
+          debugPrint('Analytics log error (non-fatal): $e');
+        }
+      }
+    }
+
+    if (decision.canRequestAds) {
+      await startupWithTimeoutVoid(
+        adService.init(),
+        timeout: timeout,
+        debugLabel: 'ads',
+      );
+    }
 
     await startupWithTimeoutVoid(
       iapService.init(),
-      timeout: timeout,
+      timeout: const Duration(seconds: 8),
       debugLabel: 'iap',
     );
   }
@@ -252,16 +302,12 @@ class _BlockshadeAppState extends State<BlockshadeApp> {
   void initState() {
     super.initState();
     final gameProvider = context.read<GameProvider>();
-    final storageService = context.read<StorageService>();
-    final analyticsService = context.read<AnalyticsService>();
     final adService = context.read<AdService>();
-    unawaited(_initGameSession(gameProvider, storageService, analyticsService, adService));
+    unawaited(_initGameSession(gameProvider, adService));
   }
 
   Future<void> _initGameSession(
     GameProvider gameProvider,
-    StorageService storageService,
-    AnalyticsService analyticsService,
     AdService adService,
   ) async {
     await startupWithTimeoutVoid(
@@ -269,32 +315,6 @@ class _BlockshadeAppState extends State<BlockshadeApp> {
       timeout: _initTimeout,
       debugLabel: 'game_provider',
     );
-
-    try {
-      final daysSinceInstall = await startupWithTimeout(
-        storageService.getDaysSinceInstall(),
-        timeout: const Duration(seconds: 2),
-        fallback: 0,
-        debugLabel: 'install_age',
-      );
-      final isFirstOpen = await startupWithTimeout(
-        storageService.isFirstOpen(),
-        timeout: const Duration(seconds: 2),
-        fallback: false,
-        debugLabel: 'first_open',
-      );
-      await startupWithTimeoutVoid(
-        analyticsService.logAppOpen(
-          firstOpen: isFirstOpen,
-          daysSinceInstall: daysSinceInstall,
-        ),
-        timeout: const Duration(seconds: 2),
-        debugLabel: 'analytics_app_open',
-      );
-    } catch (e) {
-      debugPrint('Analytics log error (non-fatal): $e');
-    }
-
     adService.onSessionStart();
   }
 

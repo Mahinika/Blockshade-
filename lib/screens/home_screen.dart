@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
+import '../services/ad_service.dart';
 import '../services/daily_puzzle_service.dart';
 import '../services/haptic_service.dart';
 import '../services/sound_service.dart';
@@ -10,12 +11,17 @@ import '../utils/colors.dart';
 import '../utils/localization.dart';
 import '../widgets/brass_star.dart';
 import '../widgets/masking_tape.dart';
+import '../widgets/privacy_policy_link.dart';
 import '../widgets/workshop_background.dart';
+import 'privacy_options_screen.dart';
 import 'world_map_screen.dart';
 import 'shop_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.openUrl});
+
+  /// Test hook for the privacy-policy link. Production opens the browser.
+  final Future<bool> Function(Uri uri)? openUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -220,10 +226,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _showSettingsDialog(BuildContext context, AppLocalizations l10n) {
+  void _showSettingsDialog(BuildContext hostContext, AppLocalizations l10n) {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: hostContext,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: VerkstadTokens.maskingTape,
         title: Text(l10n.settings, style: const TextStyle(color: AppColors.text)),
         content: Column(
@@ -238,11 +244,31 @@ class HomeScreen extends StatelessWidget {
             _buildSettingRow(l10n.vibration, HapticService.instance.isEnabled, (v) {
               HapticService.instance.setEnabled(v);
             }),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  Navigator.push(
+                    hostContext,
+                    MaterialPageRoute(
+                      builder: (context) => PrivacyOptionsScreen(openUrl: openUrl),
+                    ),
+                  );
+                },
+                child: Text(l10n.privacyChoices),
+              ),
+            ),
+            PrivacyPolicyLink(
+              url: hostContext.read<AdService>().privacyPolicyUrl,
+              openUrl: openUrl,
+            ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('OK'),
           ),
         ],

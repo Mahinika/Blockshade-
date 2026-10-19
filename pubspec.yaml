@@ -19,7 +19,9 @@ dependencies:
   shared_preferences: ^2.3.3
   
   # Ads (AdMob)
-  google_mobile_ads: ^5.3.1
+  # 9.x bundles Google Mobile Ads SDK 25 (v24+). 5.3.1 / GMA v23 sunsets 2027-06-30.
+  # 9.1.0 is the newest release on pub.dev (GMA Android 25.4.0, UMP 4.0.0).
+  google_mobile_ads: ^9.1.0
   
   # In-app purchases
   in_app_purchase: ^3.2.0
@@ -36,6 +38,9 @@ dependencies:
   
   # UUID for unique IDs
   uuid: ^4.5.1
+
+  # Opens the privacy policy from settings and the consent screen
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -56,3 +61,4 @@ flutter:
   assets:
     - assets/levels/
     - assets/sounds/
+    - config/admob.json
