@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
+import '../services/daily_puzzle_service.dart';
 import '../services/haptic_service.dart';
 import '../services/sound_service.dart';
+import 'game_screen.dart';
 import '../theme/verkstad_tokens.dart';
 import '../utils/colors.dart';
 import '../utils/localization.dart';
@@ -35,6 +37,8 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       _buildLogo(context),
                       const SizedBox(height: 40),
+                      _buildDailyPuzzle(context, provider, l10n),
+                      const SizedBox(height: 20),
                       _buildPlayButtons(context, l10n),
                     ],
                   ),
@@ -100,6 +104,47 @@ class HomeScreen extends StatelessWidget {
           child: const Text(
             'Trä, papper och skuggor',
             style: TextStyle(fontSize: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDailyPuzzle(
+    BuildContext context,
+    GameProvider provider,
+    AppLocalizations l10n,
+  ) {
+    final today = DateTime.now();
+    final completed = provider.progress.isDailyCompletedOn(today);
+    final streak = provider.progress.dailyStreak;
+
+    return Column(
+      children: [
+        SizedBox(
+          width: 280,
+          child: MaskingTapeButton(
+            label: completed ? '${l10n.dailyPuzzle} ✓' : l10n.dailyPuzzle,
+            icon: Icons.calendar_today,
+            onPressed: () {
+              final levelId = DailyPuzzleService.levelIdForDate(today);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GameScreen(levelId: levelId),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 6),
+        MaskingTape(
+          showPin: true,
+          rotation: 0.02,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          child: Text(
+            '${l10n.dailyStreak}: $streak${completed ? ' · ${l10n.dailyComplete}' : ''}',
+            style: const TextStyle(fontSize: 13),
           ),
         ),
       ],

@@ -97,8 +97,11 @@ class AdService {
     }
   }
 
+  static const int _neverInterstitialBelowLevel = 3;
+
   bool shouldShowInterstitial(int currentLevel, bool adsRemoved) {
     if (adsRemoved) return false;
+    if (currentLevel <= _neverInterstitialBelowLevel) return false;
     if (currentLevel < _remoteConfig.minLevelForInterstitial) return false;
     if (_purchaseMadeInSession) return false;
     if (_justFailedLevel) return false;
