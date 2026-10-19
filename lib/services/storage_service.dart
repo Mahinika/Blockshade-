@@ -1,5 +1,5 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
+import 'preferences_store.dart';
 
 class StorageService {
   static const String _progressKey = 'player_progress';
@@ -7,15 +7,15 @@ class StorageService {
   static const String _firstOpenKey = 'first_open';
   static const String _installDateKey = 'install_date';
 
-  SharedPreferences? _prefs;
+  final PreferencesStore _prefs = PreferencesStore.instance;
 
   Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+    await _prefs.ensureReady();
   }
 
   Future<PlayerProgress> loadProgress() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_progressKey);
+    await _prefs.ensureReady();
+    final jsonString = await _prefs.getString(_progressKey);
     if (jsonString == null) {
       return PlayerProgress.initial();
     }
@@ -28,41 +28,41 @@ class StorageService {
   }
 
   Future<void> saveProgress(PlayerProgress progress) async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    await prefs.setString(_progressKey, progress.toJsonString());
+    await _prefs.ensureReady();
+    await _prefs.setString(_progressKey, progress.toJsonString());
   }
 
   Future<String> getOrCreateSessionId() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    var sessionId = prefs.getString(_sessionIdKey);
+    await _prefs.ensureReady();
+    var sessionId = await _prefs.getString(_sessionIdKey);
     if (sessionId == null) {
       sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-      await prefs.setString(_sessionIdKey, sessionId);
+      await _prefs.setString(_sessionIdKey, sessionId);
     }
     return sessionId;
   }
 
   Future<void> resetSessionId() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    await _prefs.ensureReady();
     final sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-    await prefs.setString(_sessionIdKey, sessionId);
+    await _prefs.setString(_sessionIdKey, sessionId);
   }
 
   Future<bool> isFirstOpen() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    final isFirst = prefs.getBool(_firstOpenKey) ?? true;
+    await _prefs.ensureReady();
+    final isFirst = await _prefs.getBool(_firstOpenKey) ?? true;
     if (isFirst) {
-      await prefs.setBool(_firstOpenKey, false);
-      await prefs.setString(_installDateKey, DateTime.now().toIso8601String());
+      await _prefs.setBool(_firstOpenKey, false);
+      await _prefs.setString(_installDateKey, DateTime.now().toIso8601String());
     }
     return isFirst;
   }
 
   Future<int> getDaysSinceInstall() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    final installDateStr = prefs.getString(_installDateKey);
+    await _prefs.ensureReady();
+    final installDateStr = await _prefs.getString(_installDateKey);
     if (installDateStr == null) return 0;
-    
+
     try {
       final installDate = DateTime.parse(installDateStr);
       return DateTime.now().difference(installDate).inDays;
@@ -72,7 +72,6 @@ class StorageService {
   }
 
   Future<void> clearAll() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    await prefs.clear();
+    await _prefs.clear();
   }
 }

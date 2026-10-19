@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../theme/block_symbols.dart';
 import '../theme/verkstad_tokens.dart';
 
 class WoodBlockPainter extends CustomPainter {
@@ -9,16 +8,22 @@ class WoodBlockPainter extends CustomPainter {
     required this.colorName,
     required this.textureSeed,
     this.lift = 0,
-    this.showDirection = true,
-    this.directionAngle = 0,
+    this.horizontal = true,
+    this.negativeHead = true,
+    this.positiveHead = true,
+    this.notchCount = 1,
+    this.showMarkings = true,
   });
 
   final Color fillColor;
   final String colorName;
   final int textureSeed;
   final double lift;
-  final bool showDirection;
-  final double directionAngle;
+  final bool horizontal;
+  final bool negativeHead;
+  final bool positiveHead;
+  final int notchCount;
+  final bool showMarkings;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -62,13 +67,9 @@ class WoodBlockPainter extends CustomPainter {
       canvas.drawRRect(rrect.deflate(0.5), edge..strokeWidth = 1);
     }
 
-    final symbol = BlockSymbols.forColorName(colorName);
-    if (symbol != null) {
-      BlockSymbols.paintSymbol(canvas, rect.deflate(8), symbol);
-    }
-
-    if (showDirection) {
-      _paintDirectionArrow(canvas, rect);
+    if (showMarkings) {
+      _paintNotches(canvas, rect);
+      _paintAxisArrows(canvas, rect);
     }
   }
 
@@ -92,25 +93,59 @@ class WoodBlockPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _paintDirectionArrow(Canvas canvas, Rect rect) {
+  void _paintNotches(Canvas canvas, Rect rect) {
+    final count = notchCount.clamp(1, 8);
+    final paint = Paint()
+      ..color = VerkstadTokens.pencil.withValues(alpha: 0.55)
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round;
+    final span = rect.width * 0.55;
+    final start = rect.center.dx - span / 2;
+    final y = rect.bottom - 6;
+    for (var i = 0; i < count; i++) {
+      final x = count == 1 ? rect.center.dx : start + span * (i / (count - 1));
+      canvas.drawLine(Offset(x, y), Offset(x, y - 4), paint);
+    }
+  }
+
+  void _paintAxisArrows(Canvas canvas, Rect rect) {
     final center = rect.center;
-    final arrowSize = rect.shortestSide * 0.22;
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(directionAngle);
-    final arrow = Path();
-    arrow.moveTo(arrowSize * 0.6, 0);
-    arrow.lineTo(-arrowSize * 0.35, -arrowSize * 0.35);
-    arrow.lineTo(-arrowSize * 0.15, 0);
-    arrow.lineTo(-arrowSize * 0.35, arrowSize * 0.35);
-    arrow.close();
-    canvas.drawPath(
-      arrow,
-      Paint()
-        ..color = VerkstadTokens.pencil.withValues(alpha: 0.75)
-        ..style = PaintingStyle.fill,
-    );
-    canvas.restore();
+    final len = rect.shortestSide * 0.28;
+    final shaft = Paint()
+      ..color = VerkstadTokens.pencil.withValues(alpha: 0.8)
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+
+    if (horizontal) {
+      canvas.drawLine(
+        Offset(center.dx - len, center.dy),
+        Offset(center.dx + len, center.dy),
+        shaft,
+      );
+      _head(canvas, Offset(center.dx - len, center.dy), const Offset(-1, 0), negativeHead);
+      _head(canvas, Offset(center.dx + len, center.dy), const Offset(1, 0), positiveHead);
+    } else {
+      canvas.drawLine(
+        Offset(center.dx, center.dy - len),
+        Offset(center.dx, center.dy + len),
+        shaft,
+      );
+      _head(canvas, Offset(center.dx, center.dy - len), const Offset(0, -1), negativeHead);
+      _head(canvas, Offset(center.dx, center.dy + len), const Offset(0, 1), positiveHead);
+    }
+  }
+
+  void _head(Canvas canvas, Offset tip, Offset dir, bool open) {
+    final paint = Paint()
+      ..color = VerkstadTokens.pencil.withValues(alpha: open ? 0.85 : 0.18)
+      ..style = PaintingStyle.fill;
+    final n = Offset(-dir.dy, dir.dx);
+    final path = Path()
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(tip.dx - dir.dx * 7 + n.dx * 4, tip.dy - dir.dy * 7 + n.dy * 4)
+      ..lineTo(tip.dx - dir.dx * 7 - n.dx * 4, tip.dy - dir.dy * 7 - n.dy * 4)
+      ..close();
+    canvas.drawPath(path, paint);
   }
 
   @override
@@ -118,7 +153,11 @@ class WoodBlockPainter extends CustomPainter {
     return oldDelegate.fillColor != fillColor ||
         oldDelegate.textureSeed != textureSeed ||
         oldDelegate.lift != lift ||
-        oldDelegate.directionAngle != directionAngle;
+        oldDelegate.horizontal != horizontal ||
+        oldDelegate.negativeHead != negativeHead ||
+        oldDelegate.positiveHead != positiveHead ||
+        oldDelegate.notchCount != notchCount ||
+        oldDelegate.showMarkings != showMarkings;
   }
 }
 

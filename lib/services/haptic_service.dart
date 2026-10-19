@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'preferences_store.dart';
 
 /// Abstrakta haptikmönster enligt stilriktning Verkstad.
 class HapticService {
@@ -7,17 +8,17 @@ class HapticService {
   static final HapticService instance = HapticService._();
 
   static const _prefKey = 'haptics_enabled';
+  final PreferencesStore _prefs = PreferencesStore.instance;
   bool _enabled = true;
 
   Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    _enabled = prefs.getBool(_prefKey) ?? true;
+    await _prefs.ensureReady();
+    _enabled = await _prefs.getBool(_prefKey) ?? true;
   }
 
   Future<void> setEnabled(bool value) async {
     _enabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_prefKey, value);
+    await _prefs.setBool(_prefKey, value);
   }
 
   bool get isEnabled => _enabled;

@@ -1,10 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
 import '../models/models.dart';
-import 'level_generator.dart';
-import 'solver.dart';
+import 'daily_puzzle_generator.dart';
+import 'preferences_store.dart';
 
 /// Deterministic daily puzzle from calendar date (works fully offline).
 class DailyPuzzleService {
@@ -12,12 +14,20 @@ class DailyPuzzleService {
 
   static const String _cachedLevelKeyPrefix = 'daily_level_cache_';
 
-  SharedPreferences? _prefs;
+  /// Hard caps so generation cannot run unbounded on device.
+  static const int maxPrimaryAttempts = 25;
+  static const int maxFallbackAttempts = 15;
+  static const Duration generationTimeout = Duration(seconds: 3);
+
+  final PreferencesStore _prefs = PreferencesStore.instance;
 
   final Map<String, Level> _memoryCache = {};
+  final Map<String, Future<Level>> _inFlight = {};
 
-  Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+  Level? _bundledFallbackTemplate;
+
+  Future<void> ensurePrefs() async {
+    await _prefs.ensureReady();
   }
 
   static String dateKey(DateTime date) {
@@ -55,8 +65,24 @@ class DailyPuzzleService {
       return _memoryCache[key]!;
     }
 
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    final cached = prefs.getString('$_cachedLevelKeyPrefix$key');
+    final inFlight = _inFlight[key];
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    final future = _resolveLevelForDate(date, key);
+    _inFlight[key] = future;
+    try {
+      return await future;
+    } finally {
+      _inFlight.remove(key);
+    }
+  }
+
+  Future<Level> _resolveLevelForDate(DateTime date, String key) async {
+    await ensurePrefs();
+    final cacheKey = '$_cachedLevelKeyPrefix$key';
+    final cached = await _prefs.getString(cacheKey);
     if (cached != null) {
       try {
         final level = Level.fromJson(jsonDecode(cached) as Map<String, dynamic>);
@@ -67,96 +93,68 @@ class DailyPuzzleService {
       }
     }
 
-    final level = _generateVerifiedLevel(date);
+    final levelId = levelIdForDate(date);
+    final seed = seedForDate(date);
+    Level level;
+
+    try {
+      final json = await Isolate.run(() {
+        return generateDailyLevelInIsolate(
+          DailyGenerationInput(
+            levelId: levelId,
+            seed: seed,
+            maxPrimaryAttempts: maxPrimaryAttempts,
+            maxFallbackAttempts: maxFallbackAttempts,
+          ).toJson(),
+        );
+      }).timeout(generationTimeout);
+      level = Level.fromJson(json);
+    } catch (e) {
+      // ignore: avoid_print
+      print('Daily generation failed for $key: $e');
+      level = await _loadBundledFallback(levelId);
+    }
+
     _memoryCache[key] = level;
-    await prefs.setString('$_cachedLevelKeyPrefix$key', level.toJsonString());
+    unawaited(_prefs.setString(cacheKey, level.toJsonString()));
     return level;
   }
 
-  Level _generateVerifiedLevel(DateTime date) {
-    final seed = seedForDate(date);
-    final levelId = levelIdForDate(date);
-    final generator = LevelGenerator(seed: seed);
-
-    final config = GeneratorConfig(
-      world: 2,
-      minBlocks: 6,
-      maxBlocks: 9,
-      minWidth: 5,
-      maxWidth: 7,
-      minHeight: 6,
-      maxHeight: 8,
-      echoBlockChance: 0.35,
-      lockedBlockChance: 0.15,
-      gateChance: 0.0,
-      wallCount: 2,
-      slack: 4,
-    );
-
-    final level = generator.generate(levelId, config, maxAttempts: 200);
-    if (level != null) {
-      final solver = Solver(level);
-      final result = solver.solve();
-      if (result.solvable) {
-        return level;
-      }
-    }
-
-    return _fallbackDailyLevel(levelId, seed);
+  Future<Level> _loadBundledFallback(String levelId) async {
+    _bundledFallbackTemplate ??= await _readBundledFallback();
+    final template = _bundledFallbackTemplate!;
+    final map = template.toJson();
+    map['id'] = levelId;
+    return Level.fromJson(map);
   }
 
-  Level _fallbackDailyLevel(String levelId, int seed) {
-    final generator = LevelGenerator(seed: seed + 7);
-    final config = GeneratorConfig.forWorld(1, levelInWorld: 12, isBoss: false);
-    final level = generator.generate(levelId, config, maxAttempts: 150);
-    if (level != null) {
-      return Level(
-        id: levelId,
-        world: 0,
-        grid: level.grid,
-        moveLimit: level.moveLimit,
-        blocks: level.blocks,
-        gates: level.gates,
-        walls: level.walls,
-        solver: level.solver,
-        seed: seed,
-        generatorVersion: level.generatorVersion,
-      );
-    }
-
-    return Level(
-      id: levelId,
-      world: 0,
-      grid: const GridSize(5, 6),
-      moveLimit: 12,
-      blocks: [
-        Block(
-          id: 'a',
-          color: 'red',
-          cells: [const BlockCell(2, 2)],
-          direction: Direction.right,
-          isEcho: true,
-        ),
-        Block(
-          id: 'b',
-          color: 'blue',
-          cells: [const BlockCell(1, 3), const BlockCell(1, 4)],
-          direction: Direction.left,
-        ),
-      ],
-      solver: const LevelSolverData(
-        solvable: true,
-        optimalMoves: 4,
-        branching: 1.2,
-        deadEnds: 0,
-        difficulty: 0.35,
-      ),
-      seed: seed,
-      generatorVersion: 'daily-fallback',
-    );
+  Future<Level> _readBundledFallback() async {
+    final jsonString = await rootBundle.loadString('assets/levels/daily_fallback.json');
+    return Level.fromJson(jsonDecode(jsonString) as Map<String, dynamic>);
   }
 
   void clearMemoryCache() {
     _memoryCache.clear();
+  }
+
+  /// Exposed for tests: bounded generation without persistence.
+  Future<Level> generateForDateWithoutCache(DateTime date) async {
+    final levelId = levelIdForDate(date);
+    final seed = seedForDate(date);
+    try {
+      final json = await Isolate.run(() {
+        return generateDailyLevelInIsolate(
+          DailyGenerationInput(
+            levelId: levelId,
+            seed: seed,
+            maxPrimaryAttempts: maxPrimaryAttempts,
+            maxFallbackAttempts: maxFallbackAttempts,
+          ).toJson(),
+        );
+      }).timeout(generationTimeout);
+      return Level.fromJson(json);
+    } catch (_) {
+      return await _loadBundledFallback(levelId);
+    }
   }
 }
