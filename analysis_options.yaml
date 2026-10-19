@@ -1,0 +1,17 @@
+# Analysis options for Blockshade
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - tool/**
+  errors:
+    deprecated_member_use: ignore
+
+linter:
+  rules:
+    avoid_print: false
+    prefer_initializing_formals: false
+    use_null_aware_elements: false
+    sized_box_for_whitespace: false

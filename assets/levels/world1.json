@@ -1,0 +1,2206 @@
+[
+  {
+    "id": "w1-001",
+    "world": 1,
+    "grid": {
+      "w": 5,
+      "h": 6
+    },
+    "moveLimit": 9,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            0,
+            3
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            2,
+            1
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            1,
+            1
+          ]
+        ],
+        "dir": "down"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 3,
+      "branching": 1.7142857142857142,
+      "deadEnds": 0,
+      "difficulty": 0.2729591836734694
+    },
+    "seed": 570694949,
+    "generatorVersion": "1.0"
+  },
+  {
+    "id": "w1-002",
+    "world": 1,
+    "grid": {
+      "w": 5,
+      "h": 6
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            0,
+            3
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            1,
+            0
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ]
+        ],
+        "dir": "right"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 4,
+      "branching": 2.1333333333333333,
+      "deadEnds": 0,
+      "difficulty": 0.3302380952380953
+    },
+    "seed": 1037663823,
+    "generatorVersion": "1.0"
+  },
+  {
+    "id": "w1-003",
+    "world": 1,
+    "grid": {
+      "w": 5,
+      "h": 6
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            0,
+            4
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            3,
+            0
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "dir": "right"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 4,
+      "branching": 2.1333333333333333,
+      "deadEnds": 0,
+      "difficulty": 0.3302380952380953
+    },
+    "seed": 645782914,
+    "generatorVersion": "1.0"
+  },
+  {
+    "id": "w1-004",
+    "world": 1,
+    "grid": {
+      "w": 5,
+      "h": 6
+    },
+    "moveLimit": 9,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            3,
+            3
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            4,
+            4
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            2,
+            1
+          ]
+        ],
+        "dir": "up"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 4,
+      "branching": 2.1333333333333333,
+      "deadEnds": 0,
+      "difficulty": 0.3302380952380953
+    },
+    "seed": 323193286,
+    "generatorVersion": "1.0"
+  },
+  {
+    "id": "w1-005",
+    "world": 1,
+    "grid": {
+      "w": 5,
+      "h": 6
+    },
+    "moveLimit": 9,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            2,
+            2
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            1
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            5
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            0,
+            3
+          ]
+        ],
+        "dir": "right"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 4,
+      "branching": 2.1333333333333333,
+      "deadEnds": 0,
+      "difficulty": 0.3302380952380953
+    },
+    "seed": 181221164,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        4,
+        4
+      ]
+    ]
+  },
+  {
+    "id": "w1-006",
+    "world": 1,
+    "grid": {
+      "w": 5,
+      "h": 6
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            0,
+            3
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            1,
+            5
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            1,
+            2
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            3,
+            1
+          ],
+          [
+            3,
+            2
+          ]
+        ],
+        "dir": "right"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 5,
+      "branching": 2.5806451612903225,
+      "deadEnds": 0,
+      "difficulty": 0.3891321044546851
+    },
+    "seed": 449545902,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        2,
+        5
+      ]
+    ]
+  },
+  {
+    "id": "w1-007",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            0,
+            5
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            1,
+            4
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            4,
+            6
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            3,
+            0
+          ],
+          [
+            3,
+            1
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        "dir": "up"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 5,
+      "branching": 2.5806451612903225,
+      "deadEnds": 0,
+      "difficulty": 0.3891321044546851
+    },
+    "seed": 376006857,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        2,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "w1-008",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            1,
+            3
+          ],
+          [
+            1,
+            4
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            4,
+            1
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            5,
+            0
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            2,
+            5
+          ],
+          [
+            2,
+            6
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            1,
+            6
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 5,
+      "branching": 1.0,
+      "deadEnds": 3,
+      "difficulty": 0.39255952380952386
+    },
+    "seed": 430216765,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        5,
+        4
+      ]
+    ]
+  },
+  {
+    "id": "w1-009",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            1,
+            1
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            2,
+            5
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            3,
+            6
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            0,
+            0
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "dir": "left"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 5,
+      "branching": 1.59375,
+      "deadEnds": 3,
+      "difficulty": 0.4264880952380953
+    },
+    "seed": 205448390,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        4,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "w1-010",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            1,
+            4
+          ],
+          [
+            2,
+            4
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            2
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            1,
+            5
+          ],
+          [
+            1,
+            6
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            5,
+            3
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        "dir": "left"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 6,
+      "branching": 1.7894736842105263,
+      "deadEnds": 3,
+      "difficulty": 0.4710056390977444
+    },
+    "seed": 553085289,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        1,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "w1-011",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            3
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            5,
+            1
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "dir": "right",
+        "echo": true
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            0,
+            3
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            1,
+            4
+          ],
+          [
+            1,
+            5
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 6,
+      "branching": 2.038961038961039,
+      "deadEnds": 3,
+      "difficulty": 0.48526205936920225
+    },
+    "seed": 972213859,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        3,
+        5
+      ]
+    ]
+  },
+  {
+    "id": "w1-012",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            5,
+            4
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            1,
+            5
+          ],
+          [
+            2,
+            5
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            1
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            1,
+            3
+          ],
+          [
+            1,
+            4
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            3,
+            5
+          ]
+        ],
+        "dir": "down"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 6,
+      "branching": 1.5909090909090908,
+      "deadEnds": 4,
+      "difficulty": 0.4909090909090909
+    },
+    "seed": 616669878,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        4,
+        0
+      ]
+    ]
+  },
+  {
+    "id": "w1-013",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            1,
+            3
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            1,
+            5
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            3,
+            5
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            2,
+            0
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 6,
+      "branching": 1.59375,
+      "deadEnds": 3,
+      "difficulty": 0.4598214285714286
+    },
+    "seed": 104947368,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        5,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "w1-014",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 11,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            3,
+            4
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            4,
+            3
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            1,
+            2
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            5,
+            1
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            4,
+            6
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "g",
+        "color": "cyan",
+        "cells": [
+          [
+            1,
+            3
+          ],
+          [
+            1,
+            4
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 7,
+      "branching": 1.9789473684210526,
+      "deadEnds": 5,
+      "difficulty": 0.5776660401002507
+    },
+    "seed": 818637070,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        0,
+        5
+      ]
+    ]
+  },
+  {
+    "id": "w1-015",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 11,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            4,
+            3
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            5,
+            3
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            5
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      },
+      {
+        "id": "g",
+        "color": "cyan",
+        "cells": [
+          [
+            5,
+            4
+          ]
+        ],
+        "dir": "down"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 7,
+      "branching": 2.061946902654867,
+      "deadEnds": 4,
+      "difficulty": 0.5511588706278973
+    },
+    "seed": 482006686,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        3,
+        5
+      ],
+      [
+        0,
+        3
+      ]
+    ]
+  },
+  {
+    "id": "w1-016",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 11,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            4,
+            3
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            2,
+            4
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            1
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            1,
+            5
+          ],
+          [
+            2,
+            5
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            4,
+            2
+          ],
+          [
+            5,
+            2
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            4,
+            6
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "g",
+        "color": "cyan",
+        "cells": [
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            1
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 7,
+      "branching": 1.0,
+      "deadEnds": 6,
+      "difficulty": 0.5529761904761905
+    },
+    "seed": 327800979,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        0,
+        6
+      ],
+      [
+        1,
+        4
+      ]
+    ]
+  },
+  {
+    "id": "w1-017",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 10,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            4,
+            3
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            0,
+            5
+          ],
+          [
+            1,
+            5
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            1,
+            3
+          ],
+          [
+            1,
+            4
+          ]
+        ],
+        "dir": "left",
+        "echo": true
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            3,
+            5
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            5,
+            5
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            1
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "g",
+        "color": "cyan",
+        "cells": [
+          [
+            1,
+            2
+          ]
+        ],
+        "dir": "left"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 7,
+      "branching": 2.0661157024793386,
+      "deadEnds": 4,
+      "difficulty": 0.5513970877607242
+    },
+    "seed": 512613636,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        2,
+        6
+      ],
+      [
+        1,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "w1-018",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 11,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            0,
+            3
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            1,
+            0
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            2,
+            4
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            2,
+            0
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            3
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            5,
+            4
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "g",
+        "color": "cyan",
+        "cells": [
+          [
+            0,
+            5
+          ],
+          [
+            1,
+            5
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "h",
+        "color": "pink",
+        "cells": [
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            1
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 8,
+      "branching": 2.127906976744186,
+      "deadEnds": 4,
+      "difficulty": 0.5882613510520487
+    },
+    "seed": 588837070,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        2,
+        5
+      ],
+      [
+        0,
+        1
+      ]
+    ]
+  },
+  {
+    "id": "w1-019",
+    "world": 1,
+    "grid": {
+      "w": 6,
+      "h": 7
+    },
+    "moveLimit": 11,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            2,
+            1
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            1,
+            0
+          ]
+        ],
+        "dir": "right",
+        "echo": true
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            0,
+            3
+          ]
+        ],
+        "dir": "down"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            3,
+            2
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            4,
+            1
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            3
+          ]
+        ],
+        "dir": "right"
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            2,
+            5
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "g",
+        "color": "cyan",
+        "cells": [
+          [
+            1,
+            4
+          ],
+          [
+            1,
+            5
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "h",
+        "color": "pink",
+        "cells": [
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            4,
+            6
+          ]
+        ],
+        "dir": "right",
+        "echo": true
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 8,
+      "branching": 2.4813432835820897,
+      "deadEnds": 5,
+      "difficulty": 0.639707711442786
+    },
+    "seed": 163608655,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        1,
+        1
+      ],
+      [
+        1,
+        6
+      ]
+    ]
+  },
+  {
+    "id": "w1-020",
+    "world": 1,
+    "grid": {
+      "w": 7,
+      "h": 8
+    },
+    "moveLimit": 9,
+    "blocks": [
+      {
+        "id": "a",
+        "color": "red",
+        "cells": [
+          [
+            6,
+            2
+          ],
+          [
+            6,
+            3
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "b",
+        "color": "blue",
+        "cells": [
+          [
+            5,
+            6
+          ],
+          [
+            5,
+            7
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "c",
+        "color": "green",
+        "cells": [
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "dir": "up"
+      },
+      {
+        "id": "d",
+        "color": "yellow",
+        "cells": [
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            3
+          ]
+        ],
+        "dir": "left"
+      },
+      {
+        "id": "e",
+        "color": "purple",
+        "cells": [
+          [
+            0,
+            4
+          ],
+          [
+            0,
+            5
+          ]
+        ],
+        "dir": "right",
+        "echo": true
+      },
+      {
+        "id": "f",
+        "color": "orange",
+        "cells": [
+          [
+            5,
+            3
+          ]
+        ],
+        "dir": "up",
+        "echo": true
+      },
+      {
+        "id": "g",
+        "color": "cyan",
+        "cells": [
+          [
+            2,
+            4
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            4
+          ]
+        ],
+        "dir": "down",
+        "echo": true
+      },
+      {
+        "id": "h",
+        "color": "pink",
+        "cells": [
+          [
+            5,
+            5
+          ]
+        ],
+        "dir": "right"
+      }
+    ],
+    "solver": {
+      "solvable": true,
+      "optimalMoves": 8,
+      "branching": 2.495575221238938,
+      "deadEnds": 4,
+      "difficulty": 0.6092709650231773
+    },
+    "seed": 970117512,
+    "generatorVersion": "1.0",
+    "walls": [
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        1
+      ]
+    ]
+  }
+]
