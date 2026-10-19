@@ -14,6 +14,8 @@ class GameGrid extends StatefulWidget {
   final void Function(String blockId)? onBlockPress;
   final double cellSize;
   final int world;
+  final String? pulsedBlockId;
+  final int pulseSerial;
 
   const GameGrid({
     super.key,
@@ -22,6 +24,8 @@ class GameGrid extends StatefulWidget {
     this.onBlockPress,
     this.cellSize = 50,
     this.world = 1,
+    this.pulsedBlockId,
+    this.pulseSerial = 0,
   });
 
   @override
@@ -69,13 +73,19 @@ class _GameGridState extends State<GameGrid> {
             ),
             if (_pressedBlockId != null) _buildGhost(gameState, cellSize, gateThickness),
             ...gameState.blocks.map((block) {
+              final key = gameState.blockById(block.lockKeyBlockId);
+              final pulseThis = widget.pulsedBlockId == block.id;
               final heads = arrowHeadsFor(gameState, block);
               return BlockWidget(
+                key: ValueKey('block-${block.id}'),
                 block: block,
                 cellSize: cellSize,
                 offsetX: gateThickness,
                 offsetY: gateThickness,
                 isLocked: gameState.isBlockLocked(block),
+                keyReadyToExit: gameState.isKeyReadyToExit(block),
+                keyColorName: key?.color,
+                pulseSerial: pulseThis ? widget.pulseSerial : 0,
                 horizontal: axisForDirection(block.direction) == MoveAxis.horizontal,
                 negativeHead: heads.negativeOpen,
                 positiveHead: heads.positiveOpen,

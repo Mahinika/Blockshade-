@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:blockshade/services/onboarding_service.dart';
+import 'package:blockshade/services/preferences_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -8,6 +9,7 @@ void main() {
   group('OnboardingService', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
+      PreferencesStore.instance.resetForTesting();
     });
 
     test('onboarding is shown only once', () async {
@@ -23,6 +25,32 @@ void main() {
       expect(service.shouldShowForLevel('w1-001', true), isFalse);
       expect(service.shouldShowForLevel('w1-002', true), isFalse);
       expect(service.shouldShowForLevel('w1-003', true), isFalse);
+    });
+
+    test('lock hint is shown once, only on levels that have a lock', () async {
+      final service = OnboardingService();
+
+      expect(await service.hasSeenLockHint(), isFalse);
+      expect(
+        service.shouldShowLockHint(levelHasLockedBlock: false, hintAlreadySeen: false),
+        isFalse,
+      );
+      expect(
+        service.shouldShowLockHint(levelHasLockedBlock: true, hintAlreadySeen: false),
+        isTrue,
+      );
+
+      await service.markLockHintSeen();
+
+      expect(await service.hasSeenLockHint(), isTrue);
+      expect(
+        service.shouldShowLockHint(levelHasLockedBlock: true, hintAlreadySeen: true),
+        isFalse,
+      );
+
+      await service.resetForTesting();
+      expect(await service.hasSeenLockHint(), isFalse);
+      expect(await service.isOnboardingCompleted(), isFalse);
     });
 
     test('step index maps first three levels', () {

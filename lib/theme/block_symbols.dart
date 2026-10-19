@@ -34,11 +34,12 @@ abstract final class BlockSymbols {
     BlockSymbolKind kind, {
     Color color = VerkstadTokens.pencil,
     double irregularity = 0.08,
+    double opacity = 0.85,
   }) {
     final center = bounds.center;
     final size = bounds.shortestSide * 0.38;
     final fill = Paint()
-      ..color = color.withValues(alpha: 0.85)
+      ..color = color.withValues(alpha: opacity)
       ..style = PaintingStyle.fill;
 
     switch (kind) {
