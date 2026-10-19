@@ -5,7 +5,7 @@ class RemoteConfigService {
   bool _initialized = false;
 
   static const Map<String, dynamic> _defaults = {
-    'min_level_for_interstitial': 15,
+    'min_level_for_interstitial': 6,
     'levels_per_interstitial': 3,
     'min_seconds_between_interstitials': 90,
     'max_rewarded_videos_per_day': 6,

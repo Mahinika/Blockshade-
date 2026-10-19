@@ -115,41 +115,38 @@ tool/
 
 ## Configuration
 
-### TODO: Replace Before Release
+### AdMob ids
 
-The following placeholder IDs need to be replaced with real values before publishing:
+Test ids are the default. Replace them in one file before a store build:
 
-#### AdMob (lib/services/ad_service.dart)
+`config/admob.json`
 
-```dart
-// Current: Test IDs
-static const String _testInterstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712';
-static const String _testRewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
-
-// TODO: Replace with production IDs from AdMob console
-// static const String _prodInterstitialAdUnitId = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
-// static const String _prodRewardedAdUnitId = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
+```json
+{
+  "ADMOB_APP_ID": "ca-app-pub-3940256099942544~3347511713",
+  "ADMOB_INTERSTITIAL_UNIT_ID": "ca-app-pub-3940256099942544/1033173712",
+  "ADMOB_REWARDED_UNIT_ID": "ca-app-pub-3940256099942544/5224354917",
+  "PRIVACY_POLICY_URL": "https://mahinika.github.io/blockshade/privacy.html"
+}
 ```
 
-Also update `android/app/src/main/AndroidManifest.xml` with your AdMob App ID:
-```xml
-<meta-data
-    android:name="com.google.android.gms.ads.APPLICATION_ID"
-    android:value="ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX"/>
-```
+The Android manifest app id is read from that file at build time. Dart uses the same file, and `--dart-define=ADMOB_APP_ID=...` (plus `ADMOB_INTERSTITIAL_UNIT_ID` / `ADMOB_REWARDED_UNIT_ID` / `PRIVACY_POLICY_URL`) overrides it. UMP runs before ads initialize. Integritetsval in settings opens the privacy-options screen, which can show the consent form again. Integritetspolicy in settings and on that screen opens `PRIVACY_POLICY_URL`.
 
-#### In-App Purchases (lib/services/iap_service.dart)
+#### In-App Purchases (`lib/services/iap_catalog.dart`)
 
-```dart
-// Current: Placeholder product IDs
-static const String removeAds = 'se.cognifox.blockshade.remove_ads';
-static const String starterPack = 'se.cognifox.blockshade.starter_pack';
-static const String coinPackSmall = 'se.cognifox.blockshade.coins_small';
-static const String coinPackLarge = 'se.cognifox.blockshade.coins_large';
-static const String extraMoves = 'se.cognifox.blockshade.extra_moves';
+Create these ids in Play Console. Prices below are the proposed SEK amounts; the shop shows `ProductDetails.price` once the store responds.
 
-// TODO: Create these products in Google Play Console and verify IDs match
-```
+| Product | Id suffix | Type | Proposed price |
+|---|---|---|---|
+| Remove ads | `remove_ads` | non-consumable | 39 kr |
+| Starter pack (remove ads + hints) | `starter_pack` | non-consumable | 49 kr |
+| Hints | `hints_small` / `hints_medium` / `hints_large` | consumable | 19 / 39 / 99 kr |
+| Extra moves | `extra_moves` | consumable | 12 kr |
+| Coins | `coins_small` / `coins_large` | consumable | 19 / 49 kr |
+
+Full id: `se.cognifox.blockshade.<suffix>`.
+
+Release signing: put `android/key.properties` (and the keystore) on the build machine. They are gitignored. Without them the release APK is signed with the debug key.
 
 #### Firebase (Analytics & Remote Config)
 
@@ -162,7 +159,7 @@ static const String extraMoves = 'se.cognifox.blockshade.extra_moves';
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `min_level_for_interstitial` | 15 | First level where interstitials can show |
+| `min_level_for_interstitial` | 6 | First campaign level where interstitials can show (levels 1–5 never) |
 | `levels_per_interstitial` | 3 | Min levels between interstitials |
 | `min_seconds_between_interstitials` | 90 | Min seconds between interstitials |
 | `max_rewarded_videos_per_day` | 6 | Daily RV cap |
@@ -191,13 +188,13 @@ The app uses Swedish as the primary language with English fallback. Strings are 
 
 ## Ad Rules (from Design Doc)
 
-- No ads in first 10 levels
-- Interstitials start from level 15
-- Max 1 interstitial per 3 levels
+- No interstitials during the first 5 campaign levels
+- Max 1 interstitial per 3 completed levels
 - Min 90 seconds between interstitials
-- No interstitial after failure or purchase
-- Rewarded video available at failure (max 1 per attempt)
-- Max 6 rewarded videos per day total
+- No interstitial after failure, after a rewarded video, or after a purchase in the session
+- None if remove-ads is owned
+- Rewarded video grants a reward only when an ad is loaded
+- Max 6 rewarded videos per local day
 
 ## License
 

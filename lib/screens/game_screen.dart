@@ -106,6 +106,11 @@ class _GameScreenState extends State<GameScreen> {
       _wasLost = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _juiceKey.currentState?.onFail();
+        if (!mounted) return;
+        context.read<AdService>().noteRewardedOfferVisible(
+              placement: 'extra_moves',
+              levelId: provider.currentLevel?.id,
+            );
       });
     }
 
@@ -243,32 +248,39 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  void _requestDailyHint(GameProvider provider) {
+  Future<void> _requestDailyHint(GameProvider provider) async {
     final l10n = AppLocalizations.of(context);
     final level = provider.currentLevel;
     if (level == null) return;
 
-    final adService = context.read<AdService>();
-    void revealHint() {
-      final solver = Solver(level);
-      final result = solver.solve();
-      final firstMove = result.solution?.isNotEmpty == true ? result.solution!.first : null;
-      setState(() {
-        _dailyHintMessage = firstMove != null
-            ? '${l10n.dailyHintBody} ($firstMove)'
-            : l10n.dailyHintBody;
-      });
+    if (provider.spendHint()) {
+      _revealHint(level, l10n);
+      return;
     }
 
-    if (adService.isRewardedAdReady) {
-      adService.showRewardedAd(
-        onRewarded: (_) => revealHint(),
-        onAdDismissed: () {},
-        onAdFailedToShow: (_) => revealHint(),
-      );
-    } else {
-      revealHint();
+    final result = await context.read<AdService>().showRewarded(
+          placement: 'hint',
+          rewardType: 'hint',
+          rewardAmount: 1,
+          levelId: level.id,
+        );
+    if (!mounted) return;
+    if (result.granted) {
+      _revealHint(level, l10n);
+    } else if (result.messageSv.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.messageSv)));
     }
+  }
+
+  void _revealHint(Level level, AppLocalizations l10n) {
+    final solver = Solver(level);
+    final result = solver.solve();
+    final firstMove = result.solution?.isNotEmpty == true ? result.solution!.first : null;
+    setState(() {
+      _dailyHintMessage = firstMove != null
+          ? '${l10n.dailyHintBody} ($firstMove)'
+          : l10n.dailyHintBody;
+    });
   }
 
   void _onBlockTap(GameProvider provider, String blockId) {
@@ -334,7 +346,22 @@ class _GameScreenState extends State<GameScreen> {
                 ),
                 const SizedBox(height: 24),
                 
-                if (_failCount == 0)
+                if (provider.progress.extraMoveCredits > 0)
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    onPressed: () {
+                      if (provider.spendExtraMoveCredit()) {
+                        setState(() => _failCount++);
+                      }
+                    },
+                    icon: const Icon(Icons.more_time),
+                    label: Text('${l10n.useExtraMove} (${provider.progress.extraMoveCredits})'),
+                  ),
+                if (_failCount == 0) ...[
+                  const SizedBox(height: 12),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
@@ -344,6 +371,7 @@ class _GameScreenState extends State<GameScreen> {
                     icon: const Icon(Icons.play_circle_outline),
                     label: Text(l10n.watchAd),
                   ),
+                ],
                 
                 const SizedBox(height: 12),
                 
@@ -450,25 +478,19 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  void _watchAdForMoves(GameProvider provider) {
-    final adService = context.read<AdService>();
-    
-    if (adService.isRewardedAdReady) {
-      adService.showRewardedAd(
-        onRewarded: (amount) {
-          provider.addExtraMoves(5);
-          setState(() => _failCount++);
-        },
-        onAdDismissed: () {},
-        onAdFailedToShow: (error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ad not available: $error')),
-          );
-        },
-      );
-    } else {
+  Future<void> _watchAdForMoves(GameProvider provider) async {
+    final result = await context.read<AdService>().showRewarded(
+          placement: 'extra_moves',
+          rewardType: 'extra_moves',
+          rewardAmount: 5,
+          levelId: provider.currentLevel?.id,
+        );
+    if (!mounted) return;
+    if (result.granted) {
       provider.addExtraMoves(5);
       setState(() => _failCount++);
+    } else if (result.messageSv.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.messageSv)));
     }
   }
 
@@ -493,24 +515,28 @@ class _GameScreenState extends State<GameScreen> {
     }
 
     final adService = context.read<AdService>();
-    final currentLevel = provider.currentLevel?.levelNumber ?? 0;
-
+    final level = provider.currentLevel;
     adService.onLevelCompleted();
 
-    if (adService.shouldShowInterstitial(currentLevel, provider.progress.adsRemoved)) {
-      adService.showInterstitial(
-        onAdDismissed: () async {
-          await provider.goToNextLevel();
-          if (provider.currentLevel == null) {
-            if (mounted) Navigator.pop(context);
-          }
-        },
+    final decision = await adService.evaluateInterstitial(
+      world: level?.world ?? 1,
+      levelInWorld: level?.levelNumber ?? 1,
+      adsRemoved: provider.progress.adsRemoved,
+    );
+    if (!mounted) return;
+
+    Future<void> advance() async {
+      await provider.goToNextLevel();
+      if (provider.currentLevel == null && mounted) Navigator.pop(context);
+    }
+
+    if (decision.show) {
+      await adService.showInterstitial(
+        levelNumber: decision.campaignLevel,
+        onAdDismissed: advance,
       );
     } else {
-      await provider.goToNextLevel();
-      if (provider.currentLevel == null) {
-        if (mounted) Navigator.pop(context);
-      }
+      await advance();
     }
   }
 }

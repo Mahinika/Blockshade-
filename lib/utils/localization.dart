@@ -64,6 +64,19 @@ class AppLocalizations {
       'wait_for_life': 'Vänta på nytt liv eller titta på video',
       'new_life_in': 'Nytt liv om',
       'restore_purchases': 'Återställ köp',
+      'privacy_choices': 'Integritetsval',
+      'privacy_choices_body': 'Här ändrar du hur Blockshade får använda annonser och mätning.',
+      'manage_privacy_choices': 'Ändra integritetsval',
+      'privacy_policy': 'Integritetspolicy',
+      'privacy_link_failed': 'Kunde inte öppna integritetspolicyn.',
+      'privacy_not_required': 'Integritetsval behövs inte i den här regionen.',
+      'privacy_unavailable': 'Integritetsval är inte tillgängligt just nu.',
+      'hints_small': 'Litet tipspaket',
+      'hints_medium': 'Mellanstort tipspaket',
+      'hints_large': 'Stort tipspaket',
+      'extra_moves_pack': 'Extra drag',
+      'hint': 'Tips',
+      'use_extra_move': 'Använd extra drag',
       'sound': 'Ljud',
       'music': 'Musik',
       'vibration': 'Vibration',
@@ -124,6 +137,19 @@ class AppLocalizations {
       'wait_for_life': 'Wait for a new life or watch a video',
       'new_life_in': 'New life in',
       'restore_purchases': 'Restore purchases',
+      'privacy_choices': 'Privacy choices',
+      'privacy_choices_body': 'Change how Blockshade may use ads and measurement.',
+      'manage_privacy_choices': 'Change privacy choices',
+      'privacy_policy': 'Privacy policy',
+      'privacy_link_failed': 'Could not open the privacy policy.',
+      'privacy_not_required': 'Privacy choices are not required in this region.',
+      'privacy_unavailable': 'Privacy choices are not available right now.',
+      'hints_small': 'Small hint pack',
+      'hints_medium': 'Medium hint pack',
+      'hints_large': 'Large hint pack',
+      'extra_moves_pack': 'Extra moves',
+      'hint': 'Hint',
+      'use_extra_move': 'Use extra moves',
       'sound': 'Sound',
       'music': 'Music',
       'vibration': 'Vibration',
@@ -182,6 +208,19 @@ class AppLocalizations {
   String get waitForLife => translate('wait_for_life');
   String get newLifeIn => translate('new_life_in');
   String get restorePurchases => translate('restore_purchases');
+  String get privacyChoices => translate('privacy_choices');
+  String get privacyChoicesBody => translate('privacy_choices_body');
+  String get managePrivacyChoices => translate('manage_privacy_choices');
+  String get privacyPolicy => translate('privacy_policy');
+  String get privacyLinkFailed => translate('privacy_link_failed');
+  String get privacyNotRequired => translate('privacy_not_required');
+  String get privacyUnavailable => translate('privacy_unavailable');
+  String get hintsSmall => translate('hints_small');
+  String get hintsMedium => translate('hints_medium');
+  String get hintsLarge => translate('hints_large');
+  String get extraMovesPack => translate('extra_moves_pack');
+  String get hint => translate('hint');
+  String get useExtraMove => translate('use_extra_move');
   String get sound => translate('sound');
   String get music => translate('music');
   String get vibration => translate('vibration');

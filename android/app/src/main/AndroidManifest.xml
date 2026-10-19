@@ -1,14 +1,36 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Blockshade"
-        android:name="${applicationName}"
+        android:name=".BlockshadeApplication"
         android:icon="@mipmap/ic_launcher">
-        
-        <!-- AdMob App ID (TEST ID - replace with real ID before production) -->
+
+        <!-- Test app id by default. Gradle reads config/admob.json so one file updates this. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
-        
+            android:value="${admobAppId}"/>
+        <!-- Basic consent mode: do not start ad measurement before MobileAds.initialize(). -->
+        <meta-data
+            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
+            android:value="true"/>
+
+        <!-- Consent mode v2 defaults: denied until UMP + setConsent. Basic mode. -->
+        <meta-data
+            android:name="google_analytics_default_allow_analytics_storage"
+            android:value="false"/>
+        <meta-data
+            android:name="google_analytics_default_allow_ad_storage"
+            android:value="false"/>
+        <meta-data
+            android:name="google_analytics_default_allow_ad_user_data"
+            android:value="false"/>
+        <meta-data
+            android:name="google_analytics_default_allow_ad_personalization_signals"
+            android:value="false"/>
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -42,6 +64,10 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>
