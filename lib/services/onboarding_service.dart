@@ -1,31 +1,22 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'preferences_store.dart';
 
 /// Interactive onboarding shown once across the first three campaign levels.
 class OnboardingService {
   static const String _completedKey = 'interactive_onboarding_completed';
 
-  SharedPreferences? _prefs;
-
-  Future<void> _ensurePrefs() async {
-    _prefs ??= await SharedPreferences.getInstance();
-  }
+  final PreferencesStore _prefs = PreferencesStore.instance;
 
   Future<bool> isOnboardingCompleted() async {
-    await _ensurePrefs();
-    final prefs = _prefs!;
-    return prefs.getBool(_completedKey) ?? false;
+    await _prefs.ensureReady();
+    return await _prefs.getBool(_completedKey) ?? false;
   }
 
   Future<void> markOnboardingCompleted() async {
-    await _ensurePrefs();
-    final prefs = _prefs!;
-    await prefs.setBool(_completedKey, true);
+    await _prefs.setBool(_completedKey, true);
   }
 
   Future<void> resetForTesting() async {
-    await _ensurePrefs();
-    final prefs = _prefs!;
-    await prefs.remove(_completedKey);
+    await _prefs.remove(_completedKey);
   }
 
   bool shouldShowForLevel(String levelId, bool onboardingCompleted) {

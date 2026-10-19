@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/models.dart';
 import 'daily_puzzle_generator.dart';
+import 'preferences_store.dart';
 
 /// Deterministic daily puzzle from calendar date (works fully offline).
 class DailyPuzzleService {
@@ -19,7 +19,7 @@ class DailyPuzzleService {
   static const int maxFallbackAttempts = 15;
   static const Duration generationTimeout = Duration(seconds: 3);
 
-  SharedPreferences? _prefs;
+  final PreferencesStore _prefs = PreferencesStore.instance;
 
   final Map<String, Level> _memoryCache = {};
   final Map<String, Future<Level>> _inFlight = {};
@@ -27,7 +27,7 @@ class DailyPuzzleService {
   Level? _bundledFallbackTemplate;
 
   Future<void> ensurePrefs() async {
-    _prefs ??= await SharedPreferences.getInstance();
+    await _prefs.ensureReady();
   }
 
   static String dateKey(DateTime date) {
@@ -81,8 +81,8 @@ class DailyPuzzleService {
 
   Future<Level> _resolveLevelForDate(DateTime date, String key) async {
     await ensurePrefs();
-    final prefs = _prefs!;
-    final cached = prefs.getString('$_cachedLevelKeyPrefix$key');
+    final cacheKey = '$_cachedLevelKeyPrefix$key';
+    final cached = await _prefs.getString(cacheKey);
     if (cached != null) {
       try {
         final level = Level.fromJson(jsonDecode(cached) as Map<String, dynamic>);
@@ -116,7 +116,7 @@ class DailyPuzzleService {
     }
 
     _memoryCache[key] = level;
-    unawaited(prefs.setString('$_cachedLevelKeyPrefix$key', level.toJsonString()));
+    unawaited(_prefs.setString(cacheKey, level.toJsonString()));
     return level;
   }
 

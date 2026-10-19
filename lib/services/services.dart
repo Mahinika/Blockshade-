@@ -2,6 +2,7 @@ export 'solver.dart';
 export 'level_generator.dart';
 export 'level_service.dart';
 export 'storage_service.dart';
+export 'preferences_store.dart';
 export 'ad_service.dart';
 export 'iap_service.dart';
 export 'analytics_service.dart';

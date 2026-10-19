@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'preferences_store.dart';
 
 /// Ljud med separata volymer; CC0-träklick när filer finns.
 /// AudioPlayer skapas lazy (inte vid processstart) för att undvika native-häng.
@@ -11,6 +12,7 @@ class SoundService {
   static const _sfxKey = 'sfx_enabled';
   static const _musicKey = 'music_enabled';
 
+  final PreferencesStore _prefs = PreferencesStore.instance;
   AudioPlayer? _sfxPlayer;
   bool _sfxEnabled = true;
   bool _musicEnabled = true;
@@ -21,9 +23,9 @@ class SoundService {
     if (_initAttempted) return;
     _initAttempted = true;
 
-    final prefs = await SharedPreferences.getInstance();
-    _sfxEnabled = prefs.getBool(_sfxKey) ?? true;
-    _musicEnabled = prefs.getBool(_musicKey) ?? true;
+    await _prefs.ensureReady();
+    _sfxEnabled = await _prefs.getBool(_sfxKey) ?? true;
+    _musicEnabled = await _prefs.getBool(_musicKey) ?? true;
     try {
       _sfxPlayer ??= AudioPlayer();
       await _sfxPlayer!.setSource(AssetSource('sounds/wood_tap.wav'));
@@ -36,14 +38,12 @@ class SoundService {
 
   Future<void> setSfxEnabled(bool value) async {
     _sfxEnabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_sfxKey, value);
+    await _prefs.setBool(_sfxKey, value);
   }
 
   Future<void> setMusicEnabled(bool value) async {
     _musicEnabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_musicKey, value);
+    await _prefs.setBool(_musicKey, value);
   }
 
   bool get sfxEnabled => _sfxEnabled;

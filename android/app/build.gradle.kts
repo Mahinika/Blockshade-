@@ -25,8 +25,10 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // R8 minify breaks shared_preferences_android JNI (NoSuchMethodError on getAll).
+            // ProGuard rules above allow re-enabling minify in a future release.
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

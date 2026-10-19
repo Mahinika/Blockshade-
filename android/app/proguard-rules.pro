@@ -18,6 +18,19 @@
 # AudioPlayers (Verkstad sound hooks)
 -keep class xyz.luan.audioplayers.** { *; }
 
+# shared_preferences_android (JNI / Pigeon — R8 must not strip suspend/Continuation APIs)
+-keep class io.flutter.plugins.sharedpreferences.** { *; }
+-keepclassmembers class io.flutter.plugins.sharedpreferences.** { *; }
+-keep class dev.flutter.pigeon.** { *; }
+-keep class com.github.dart_lang.jni.** { *; }
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keepclassmembers class * {
+    *** getAll(...);
+}
+-dontwarn kotlin.coroutines.**
+-keep class kotlin.coroutines.** { *; }
+-keep class kotlin.Metadata { *; }
+
 # In-App Billing
 -keep class com.android.vending.billing.** { *; }
 
