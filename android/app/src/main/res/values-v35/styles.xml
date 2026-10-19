@@ -4,11 +4,12 @@
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
-        <item name="android:windowOptOutEdgeToEdgeEnforcement">false</item>
+        <!-- Opt out on API 35: edge-to-edge can prevent first-frame splash handoff on some devices. -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
-        <item name="android:windowOptOutEdgeToEdgeEnforcement">false</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 </resources>

@@ -240,19 +240,18 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
     );
   }
 
-  void _watchAdForLife() {
-    final adService = context.read<AdService>();
+  Future<void> _watchAdForLife() async {
     final provider = context.read<GameProvider>();
-
-    if (adService.isRewardedAdReady) {
-      adService.showRewardedAd(
-        onRewarded: (amount) {
-          provider.addLives(1);
-        },
-        onAdDismissed: () {},
-      );
-    } else {
+    final result = await context.read<AdService>().showRewarded(
+          placement: 'life',
+          rewardType: 'life',
+          rewardAmount: 1,
+        );
+    if (!mounted) return;
+    if (result.granted) {
       provider.addLives(1);
+    } else if (result.messageSv.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.messageSv)));
     }
   }
 }

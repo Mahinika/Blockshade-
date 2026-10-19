@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,14 +12,59 @@ import '../widgets/masking_tape.dart';
 import '../widgets/workshop_background.dart';
 import '../widgets/wood_panel_card.dart';
 
-class ShopScreen extends StatelessWidget {
-  const ShopScreen({super.key});
+class ShopScreen extends StatefulWidget {
+  const ShopScreen({super.key, this.entryPoint = 'home'});
+
+  final String entryPoint;
+
+  @override
+  State<ShopScreen> createState() => _ShopScreenState();
+}
+
+class _ShopScreenState extends State<ShopScreen> {
+  StreamSubscription<IapUiEvent>? _events;
+  bool _loggedOffers = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final iap = context.read<IAPService>();
+    _events = iap.events.listen(_onIapEvent);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _logOffers());
+  }
+
+  @override
+  void dispose() {
+    _events?.cancel();
+    super.dispose();
+  }
+
+  void _onIapEvent(IapUiEvent event) {
+    if (!mounted || event.messageSv.isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(event.messageSv)));
+  }
+
+  void _logOffers() {
+    if (!mounted || _loggedOffers) return;
+    _loggedOffers = true;
+    final iap = context.read<IAPService>();
+    final analytics = context.read<AnalyticsService>();
+    analytics.logStoreOpen(entryPoint: widget.entryPoint);
+    for (final productId in IapProducts.all) {
+      analytics.logIapOfferShown(
+        productId: productId,
+        placement: 'store',
+        trigger: 'store_open',
+        priceLabel: iap.priceLabel(productId),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final provider = context.watch<GameProvider>();
-    final iapService = context.read<IAPService>();
+    final iapService = context.watch<IAPService>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -72,9 +119,9 @@ class ShopScreen extends StatelessWidget {
                         icon: Icons.block,
                         title: l10n.removeAds,
                         subtitle: 'Ta bort mellanliggande annonser',
-                        price: '29 kr',
+                        price: iapService.priceLabel(IapProducts.removeAds),
                         color: AppColors.error,
-                        onTap: () => _purchaseRemoveAds(context, provider, iapService),
+                        onTap: () => _purchaseRemoveAds(context, iapService),
                       )
                     else
                       _buildPurchasedItem(
@@ -90,9 +137,9 @@ class ShopScreen extends StatelessWidget {
                       icon: Icons.monetization_on,
                       title: l10n.coinPackSmall,
                       subtitle: '500 mynt',
-                      price: '29 kr',
+                      price: iapService.priceLabel(IapProducts.coinsSmall),
                       color: AppColors.coinColor,
-                      onTap: () => _purchaseCoins(context, provider, iapService, 500),
+                      onTap: () => _purchaseCoins(context, iapService, IapProducts.coinsSmall),
                     ),
                     const SizedBox(height: 12),
                     _buildShopItem(
@@ -100,11 +147,29 @@ class ShopScreen extends StatelessWidget {
                       seed: 7,
                       icon: Icons.monetization_on,
                       title: l10n.coinPackLarge,
-                      subtitle: '2000 mynt + 500 bonus',
-                      price: '99 kr',
+                      subtitle: '2000 mynt',
+                      price: iapService.priceLabel(IapProducts.coinsLarge),
                       color: AppColors.coinColor,
                       featured: true,
-                      onTap: () => _purchaseCoins(context, provider, iapService, 2500),
+                      onTap: () => _purchaseCoins(context, iapService, IapProducts.coinsLarge),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSectionTape('Tips'),
+                    _hintItem(context, iapService, l10n.hintsSmall, '5 tips', IapProducts.hintsSmall, 11),
+                    const SizedBox(height: 12),
+                    _hintItem(context, iapService, l10n.hintsMedium, '15 tips', IapProducts.hintsMedium, 13),
+                    const SizedBox(height: 12),
+                    _hintItem(context, iapService, l10n.hintsLarge, '40 tips', IapProducts.hintsLarge, 15, featured: true),
+                    const SizedBox(height: 12),
+                    _buildShopItem(
+                      context: context,
+                      seed: 17,
+                      icon: Icons.more_time,
+                      title: l10n.extraMovesPack,
+                      subtitle: '+5 drag när banan tar slut',
+                      price: iapService.priceLabel(IapProducts.extraMoves),
+                      color: AppColors.primary,
+                      onTap: () => iapService.buyProduct(IapProducts.extraMoves, placement: 'store'),
                     ),
                     const SizedBox(height: 20),
                     _buildSectionTape('Boosters'),
@@ -182,12 +247,11 @@ class ShopScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildPackItem(Icons.block, 'Ta bort annonser'),
-          _buildPackItem(Icons.monetization_on, '1500 mynt'),
-          _buildPackItem(Icons.undo, '3x Ångra'),
+          _buildPackItem(Icons.lightbulb_outline, '${IapProducts.starterPackHints} tips'),
           const SizedBox(height: 14),
           MaskingTapeButton(
-            label: '19 kr',
-            onPressed: () => _purchaseStarterPack(context, provider, iapService),
+            label: iapService.priceLabel(IapProducts.starterPack),
+            onPressed: () => iapService.buyProduct(IapProducts.starterPack, placement: 'store'),
           ),
         ],
       ),
@@ -283,41 +347,34 @@ class ShopScreen extends StatelessWidget {
     );
   }
 
-  void _purchaseStarterPack(BuildContext context, GameProvider provider, IAPService iapService) {
-    iapService.buyProduct(IAPProducts.starterPack);
-    iapService.onPurchaseSuccess = (productId) {
-      if (productId == IAPProducts.starterPack) {
-        provider.purchaseStarterPack();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Startpaket köpt!')),
-        );
-      }
-    };
+  Widget _hintItem(
+    BuildContext context,
+    IAPService iapService,
+    String title,
+    String subtitle,
+    String productId,
+    int seed, {
+    bool featured = false,
+  }) {
+    return _buildShopItem(
+      context: context,
+      seed: seed,
+      icon: Icons.lightbulb_outline,
+      title: title,
+      subtitle: subtitle,
+      price: iapService.priceLabel(productId),
+      color: AppColors.accent,
+      featured: featured,
+      onTap: () => iapService.buyProduct(productId, placement: 'store'),
+    );
   }
 
-  void _purchaseRemoveAds(BuildContext context, GameProvider provider, IAPService iapService) {
-    iapService.buyProduct(IAPProducts.removeAds);
-    iapService.onPurchaseSuccess = (productId) {
-      if (productId == IAPProducts.removeAds) {
-        provider.removeAds();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Annonser borttagna!')),
-        );
-      }
-    };
+  void _purchaseRemoveAds(BuildContext context, IAPService iapService) {
+    iapService.buyProduct(IapProducts.removeAds, placement: 'store');
   }
 
-  void _purchaseCoins(BuildContext context, GameProvider provider, IAPService iapService, int amount) {
-    final productId = amount <= 500 ? IAPProducts.coinPackSmall : IAPProducts.coinPackLarge;
-    iapService.buyProduct(productId);
-    iapService.onPurchaseSuccess = (purchasedId) {
-      if (purchasedId == productId) {
-        provider.addCoins(amount, 'iap');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$amount mynt tillagda!')),
-        );
-      }
-    };
+  void _purchaseCoins(BuildContext context, IAPService iapService, String productId) {
+    iapService.buyProduct(productId, placement: 'store');
   }
 
   void _purchaseBooster(BuildContext context, GameProvider provider, int coinCost, int amount) {

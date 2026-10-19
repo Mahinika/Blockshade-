@@ -64,7 +64,7 @@ class GateWidget extends StatelessWidget {
           fillColor: color,
           colorName: gate.color,
           textureSeed: gate.position + gate.color.hashCode,
-          showDirection: false,
+          showMarkings: false,
         ),
         child: symbol != null
             ? CustomPaint(

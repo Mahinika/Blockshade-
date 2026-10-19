@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../painters/wood_block_painter.dart';
 import '../services/haptic_service.dart';
+import '../theme/move_arrows.dart';
 import '../utils/colors.dart';
 import '../utils/localization.dart';
 import '../theme/verkstad_tokens.dart';
@@ -20,6 +21,10 @@ class BlockWidget extends StatefulWidget {
   final int pulseSerial;
   final VoidCallback onTap;
   final VoidCallback? onPressDown;
+  final VoidCallback? onPressUp;
+  final bool horizontal;
+  final bool negativeHead;
+  final bool positiveHead;
 
   const BlockWidget({
     super.key,
@@ -33,6 +38,10 @@ class BlockWidget extends StatefulWidget {
     this.pulseSerial = 0,
     required this.onTap,
     this.onPressDown,
+    this.onPressUp,
+    this.horizontal = true,
+    this.negativeHead = true,
+    this.positiveHead = true,
   });
 
   @override
@@ -182,7 +191,7 @@ class _BlockWidgetState extends State<BlockWidget> with TickerProviderStateMixin
       top: minY * widget.cellSize + widget.offsetY + _bounceOffset,
       child: AnimatedBuilder(
         animation: Listenable.merge([_shake, _pulse]),
-        builder: (context, child) {
+        builder: (context, _) {
           final shakeT = _shake.value;
           final dx = _reduceMotion ? 0.0 : math.sin(shakeT * math.pi * 4) * (1 - shakeT) * 7;
           final pulse = math.sin(_pulse.value * math.pi);
@@ -192,86 +201,88 @@ class _BlockWidgetState extends State<BlockWidget> with TickerProviderStateMixin
             offset: Offset(dx, 0),
             child: Transform.scale(
               scale: scale,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  child!,
-                  if (showPulse)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          key: const Key('key-pulse'),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6),
-                            color: VerkstadTokens.maskingTape.withValues(alpha: 0.45 * pulse),
-                            border: Border.all(color: VerkstadTokens.maskingTape, width: 3),
-                          ),
+              child: Semantics(
+                button: true,
+                label: lockedLabel,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (_) {
+                    widget.onPressDown?.call();
+                    if (!widget.isLocked) setState(() => _lift = 3);
+                  },
+                  onTapUp: (_) {
+                    widget.onPressUp?.call();
+                    setState(() => _lift = 0);
+                  },
+                  onTapCancel: () {
+                    widget.onPressUp?.call();
+                    setState(() => _lift = 0);
+                  },
+                  onTap: () {
+                    if (widget.isLocked) _rejectTap();
+                    widget.onTap();
+                  },
+                  child: Transform.rotate(
+                    angle: _rotation,
+                    child: AnimatedContainer(
+                      duration: Duration(milliseconds: VerkstadTokens.pressMs),
+                      curve: VerkstadTokens.pressEase,
+                      width: width - 4,
+                      height: height - 4,
+                      margin: const EdgeInsets.all(2),
+                      child: CustomPaint(
+                        painter: WoodBlockPainter(
+                          fillColor: baseColor,
+                          colorName: widget.block.color,
+                          textureSeed: textureSeed + notchCountForColor(widget.block.color) * 17,
+                          lift: _lift,
+                          horizontal: widget.horizontal,
+                          negativeHead: widget.negativeHead,
+                          positiveHead: widget.positiveHead,
+                          notchCount: notchCountForColor(widget.block.color),
+                        ),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            if (showPulse)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    key: const Key('key-pulse'),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(6),
+                                      color: VerkstadTokens.maskingTape.withValues(alpha: 0.45 * pulse),
+                                      border: Border.all(color: VerkstadTokens.maskingTape, width: 3),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (widget.block.isEcho)
+                              Positioned(
+                                left: 4,
+                                top: 4,
+                                child: Icon(
+                                  Icons.blur_circular,
+                                  color: VerkstadTokens.pencil.withValues(alpha: 0.5),
+                                  size: widget.cellSize * 0.22,
+                                ),
+                              ),
+                            if (_showLock && _keyColorName != null) _padlock(width - 4),
+                          ],
                         ),
                       ),
                     ),
-                ],
-              ),
-            ),
-          );
-        },
-        child: Semantics(
-          button: true,
-          label: lockedLabel,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapDown: (_) {
-              widget.onPressDown?.call();
-              if (!widget.isLocked) setState(() => _lift = 3);
-            },
-            onTapUp: (_) => setState(() => _lift = 0),
-            onTapCancel: () => setState(() => _lift = 0),
-            onTap: () {
-              if (widget.isLocked) _rejectTap();
-              widget.onTap();
-            },
-            child: Transform.rotate(
-              angle: _rotation,
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: VerkstadTokens.pressMs),
-                curve: VerkstadTokens.pressEase,
-                width: width - 4,
-                height: height - 4,
-                margin: const EdgeInsets.all(2),
-                child: CustomPaint(
-                  painter: WoodBlockPainter(
-                    fillColor: baseColor,
-                    colorName: widget.block.color,
-                    textureSeed: textureSeed,
-                    lift: _lift,
-                    directionAngle: _directionAngle(widget.block.direction),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      if (widget.block.isEcho)
-                        Positioned(
-                          left: 4,
-                          top: 4,
-                          child: Icon(
-                            Icons.blur_circular,
-                            color: VerkstadTokens.pencil.withValues(alpha: 0.5),
-                            size: widget.cellSize * 0.22,
-                          ),
-                        ),
-                      if (_showLock && _keyColorName != null)
-                        _padlock(width - 4, height - 4),
-                    ],
                   ),
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _padlock(double blockWidth, double blockHeight) {
+  Widget _padlock(double blockWidth) {
     final c = widget.cellSize;
     final extent = 0.72 * c;
     return Positioned(
@@ -305,19 +316,6 @@ class _BlockWidgetState extends State<BlockWidget> with TickerProviderStateMixin
         },
       ),
     );
-  }
-
-  double _directionAngle(Direction direction) {
-    switch (direction) {
-      case Direction.up:
-        return -1.5708;
-      case Direction.down:
-        return 1.5708;
-      case Direction.left:
-        return 3.1416;
-      case Direction.right:
-        return 0;
-    }
   }
 
   void playBounce() {

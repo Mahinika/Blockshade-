@@ -47,9 +47,61 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
 
     _progress = await _storageService.loadProgress();
+    await _analyticsService.setAdsRemoved(_progress.adsRemoved);
+    await _analyticsService.setPayerStatus(_progress.payerStatus);
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> applyIapGrant(IapGrant grant) async {
+    var progress = _progress;
+    if (grant.productId == IapProducts.starterPack && grant.firstUnlock) {
+      progress = progress.purchaseStarterPack(hints: grant.hints);
+    } else if (grant.removesAds) {
+      progress = progress.removeAds();
+      if (grant.productId == IapProducts.starterPack) {
+        progress = progress.copyWith(starterPackPurchased: true);
+      }
+    }
+    if (grant.hints > 0 && grant.productId != IapProducts.starterPack) {
+      progress = progress.addHints(grant.hints);
+    }
+    if (grant.coins > 0) {
+      progress = progress.addCoins(grant.coins);
+      _analyticsService.logCurrencyEarn(
+        amount: grant.coins,
+        source: 'iap',
+        balanceAfter: progress.coins,
+      );
+    }
+    if (grant.extraMoveCredits > 0) {
+      progress = progress.addExtraMoveCredits(grant.extraMoveCredits);
+    }
+    if (grant.countsAsPurchase) {
+      progress = progress.copyWith(iapPurchaseCount: progress.iapPurchaseCount + 1);
+    }
+    _progress = progress;
+    await _storageService.saveProgress(_progress);
+    await _analyticsService.setAdsRemoved(_progress.adsRemoved);
+    await _analyticsService.setPayerStatus(_progress.payerStatus);
+    notifyListeners();
+  }
+
+  bool spendHint() {
+    if (_progress.hintsOwned <= 0) return false;
+    _progress = _progress.spendHint();
+    _storageService.saveProgress(_progress);
+    notifyListeners();
+    return true;
+  }
+
+  bool spendExtraMoveCredit() {
+    if (_progress.extraMoveCredits <= 0 || _gameState == null) return false;
+    _progress = _progress.spendExtraMoveCredit();
+    _storageService.saveProgress(_progress);
+    addExtraMoves(5);
+    return true;
   }
 
   Future<void> loadLevel(String levelId) async {

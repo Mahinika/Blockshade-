@@ -10,6 +10,7 @@ void main() {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
     });
+
     test('seed is deterministic from calendar date', () {
       final a = DailyPuzzleService.seedForDate(DateTime(2026, 10, 19));
       final b = DailyPuzzleService.seedForDate(DateTime(2026, 10, 19));
@@ -50,6 +51,25 @@ void main() {
       final b = await service.getLevelForDate(DateTime(2026, 1, 2));
 
       expect(a.id, isNot(equals(b.id)));
+    });
+
+    test('generation terminates within bounded time for 365 consecutive dates', () async {
+      final service = DailyPuzzleService();
+      const maxPerDateMs = 4000;
+      const maxTotalMs = 180000;
+
+      final total = Stopwatch()..start();
+      for (var day = 0; day < 365; day++) {
+        final date = DateTime(2026, 1, 1).add(Duration(days: day));
+        final perDate = Stopwatch()..start();
+        final level = await service.generateForDateWithoutCache(date);
+        perDate.stop();
+        expect(perDate.elapsedMilliseconds, lessThan(maxPerDateMs));
+        expect(level.id, DailyPuzzleService.levelIdForDate(date));
+        expect(level.blocks.isNotEmpty, isTrue);
+      }
+      total.stop();
+      expect(total.elapsedMilliseconds, lessThan(maxTotalMs));
     });
   });
 }

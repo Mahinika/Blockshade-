@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:blockshade/services/onboarding_service.dart';
+import 'package:blockshade/services/preferences_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -8,11 +9,11 @@ void main() {
   group('OnboardingService', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
+      PreferencesStore.instance.resetForTesting();
     });
 
     test('onboarding is shown only once', () async {
       final service = OnboardingService();
-      await service.init();
 
       expect(await service.isOnboardingCompleted(), isFalse);
       expect(service.shouldShowForLevel('w1-001', false), isTrue);
@@ -28,7 +29,6 @@ void main() {
 
     test('lock hint is shown once, only on levels that have a lock', () async {
       final service = OnboardingService();
-      await service.init();
 
       expect(await service.hasSeenLockHint(), isFalse);
       expect(

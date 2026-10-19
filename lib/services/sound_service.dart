@@ -1,8 +1,10 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'preferences_store.dart';
 
 /// Ljud med separata volymer; CC0-träklick när filer finns.
+/// AudioPlayer skapas lazy (inte vid processstart) för att undvika native-häng.
 class SoundService {
   SoundService._();
   static final SoundService instance = SoundService._();
@@ -10,17 +12,23 @@ class SoundService {
   static const _sfxKey = 'sfx_enabled';
   static const _musicKey = 'music_enabled';
 
-  final AudioPlayer _sfxPlayer = AudioPlayer();
+  final PreferencesStore _prefs = PreferencesStore.instance;
+  AudioPlayer? _sfxPlayer;
   bool _sfxEnabled = true;
   bool _musicEnabled = true;
   bool _woodClickAvailable = false;
+  bool _initAttempted = false;
 
   Future<void> init() async {
-    final prefs = await SharedPreferences.getInstance();
-    _sfxEnabled = prefs.getBool(_sfxKey) ?? true;
-    _musicEnabled = prefs.getBool(_musicKey) ?? true;
+    if (_initAttempted) return;
+    _initAttempted = true;
+
+    await _prefs.ensureReady();
+    _sfxEnabled = await _prefs.getBool(_sfxKey) ?? true;
+    _musicEnabled = await _prefs.getBool(_musicKey) ?? true;
     try {
-      await _sfxPlayer.setSource(AssetSource('sounds/wood_tap.wav'));
+      _sfxPlayer ??= AudioPlayer();
+      await _sfxPlayer!.setSource(AssetSource('sounds/wood_tap.wav'));
       _woodClickAvailable = true;
     } catch (e) {
       _woodClickAvailable = false;
@@ -30,14 +38,12 @@ class SoundService {
 
   Future<void> setSfxEnabled(bool value) async {
     _sfxEnabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_sfxKey, value);
+    await _prefs.setBool(_sfxKey, value);
   }
 
   Future<void> setMusicEnabled(bool value) async {
     _musicEnabled = value;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_musicKey, value);
+    await _prefs.setBool(_musicKey, value);
   }
 
   bool get sfxEnabled => _sfxEnabled;
@@ -46,8 +52,10 @@ class SoundService {
   Future<void> playWoodKnock() async {
     if (!_sfxEnabled || !_woodClickAvailable) return;
     try {
-      await _sfxPlayer.stop();
-      await _sfxPlayer.play(AssetSource('sounds/wood_tap.wav'));
+      final player = _sfxPlayer;
+      if (player == null) return;
+      await player.stop();
+      await player.play(AssetSource('sounds/wood_tap.wav'));
     } catch (e) {
       debugPrint('playWoodKnock: $e');
     }
@@ -58,6 +66,7 @@ class SoundService {
   }
 
   void dispose() {
-    _sfxPlayer.dispose();
+    _sfxPlayer?.dispose();
+    _sfxPlayer = null;
   }
 }

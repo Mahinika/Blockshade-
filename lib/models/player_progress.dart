@@ -51,6 +51,9 @@ class PlayerProgress {
   final Map<String, LevelProgress> levelProgress;
   final bool adsRemoved;
   final bool starterPackPurchased;
+  final int hintsOwned;
+  final int extraMoveCredits;
+  final int iapPurchaseCount;
   final int currentWorld;
   final String? currentLevelId;
   final int totalStars;
@@ -71,6 +74,9 @@ class PlayerProgress {
     this.levelProgress = const {},
     this.adsRemoved = false,
     this.starterPackPurchased = false,
+    this.hintsOwned = 0,
+    this.extraMoveCredits = 0,
+    this.iapPurchaseCount = 0,
     this.currentWorld = 1,
     this.currentLevelId,
     this.totalStars = 0,
@@ -226,13 +232,41 @@ class PlayerProgress {
     return copyWith(adsRemoved: true);
   }
 
-  PlayerProgress purchaseStarterPack() {
+  PlayerProgress addHints(int amount) {
+    if (amount <= 0) return this;
+    return copyWith(hintsOwned: hintsOwned + amount);
+  }
+
+  PlayerProgress spendHint() {
+    if (hintsOwned <= 0) return this;
+    return copyWith(hintsOwned: hintsOwned - 1);
+  }
+
+  PlayerProgress addExtraMoveCredits(int amount) {
+    if (amount <= 0) return this;
+    return copyWith(extraMoveCredits: extraMoveCredits + amount);
+  }
+
+  PlayerProgress spendExtraMoveCredit() {
+    if (extraMoveCredits <= 0) return this;
+    return copyWith(extraMoveCredits: extraMoveCredits - 1);
+  }
+
+  /// One-time starter pack: removes ads and grants hints. Repeat calls only
+  /// keep ads removed so a restore cannot mint hints again.
+  PlayerProgress purchaseStarterPack({int hints = 10}) {
+    if (starterPackPurchased) return copyWith(adsRemoved: true);
     return copyWith(
       starterPackPurchased: true,
       adsRemoved: true,
-      coins: coins + 1500,
-      undoBoostersOwned: undoBoostersOwned + 3,
+      hintsOwned: hintsOwned + hints,
     );
+  }
+
+  String get payerStatus {
+    if (iapPurchaseCount <= 0) return 'non_payer';
+    if (iapPurchaseCount == 1) return 'payer';
+    return 'repeat_payer';
   }
 
   PlayerProgress copyWith({
@@ -243,6 +277,9 @@ class PlayerProgress {
     Map<String, LevelProgress>? levelProgress,
     bool? adsRemoved,
     bool? starterPackPurchased,
+    int? hintsOwned,
+    int? extraMoveCredits,
+    int? iapPurchaseCount,
     int? currentWorld,
     String? currentLevelId,
     int? totalStars,
@@ -258,6 +295,9 @@ class PlayerProgress {
       levelProgress: levelProgress ?? this.levelProgress,
       adsRemoved: adsRemoved ?? this.adsRemoved,
       starterPackPurchased: starterPackPurchased ?? this.starterPackPurchased,
+      hintsOwned: hintsOwned ?? this.hintsOwned,
+      extraMoveCredits: extraMoveCredits ?? this.extraMoveCredits,
+      iapPurchaseCount: iapPurchaseCount ?? this.iapPurchaseCount,
       currentWorld: currentWorld ?? this.currentWorld,
       currentLevelId: currentLevelId ?? this.currentLevelId,
       totalStars: totalStars ?? this.totalStars,
@@ -276,6 +316,9 @@ class PlayerProgress {
             levelProgress.map((k, v) => MapEntry(k, v.toJson())),
         'adsRemoved': adsRemoved,
         'starterPackPurchased': starterPackPurchased,
+        'hintsOwned': hintsOwned,
+        'extraMoveCredits': extraMoveCredits,
+        'iapPurchaseCount': iapPurchaseCount,
         'currentWorld': currentWorld,
         'currentLevelId': currentLevelId,
         'totalStars': totalStars,
@@ -312,6 +355,9 @@ class PlayerProgress {
       levelProgress: progressMap,
       adsRemoved: json['adsRemoved'] as bool? ?? false,
       starterPackPurchased: json['starterPackPurchased'] as bool? ?? false,
+      hintsOwned: json['hintsOwned'] as int? ?? 0,
+      extraMoveCredits: json['extraMoveCredits'] as int? ?? 0,
+      iapPurchaseCount: json['iapPurchaseCount'] as int? ?? 0,
       currentWorld: json['currentWorld'] as int? ?? 1,
       currentLevelId: json['currentLevelId'] as String?,
       totalStars: json['totalStars'] as int? ?? 0,

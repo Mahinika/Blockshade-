@@ -186,6 +186,7 @@ void main() {
 
   testWidgets('tapping a locked block toasts the key color and pulses that block', (tester) async {
     SharedPreferences.setMockInitialValues({});
+    PreferencesStore.instance.resetForTesting();
 
     final storage = StorageService();
     await storage.init();
@@ -193,9 +194,8 @@ void main() {
     final analytics = AnalyticsService();
     final levels = LevelService();
     final daily = DailyPuzzleService();
-    await daily.init();
+    await daily.ensurePrefs();
     final onboarding = OnboardingService();
-    await onboarding.init();
     final game = GameProvider(
       levelService: levels,
       storageService: storage,
@@ -213,8 +213,9 @@ void main() {
           Provider<LevelService>.value(value: levels),
           Provider<DailyPuzzleService>.value(value: daily),
           Provider<OnboardingService>.value(value: onboarding),
-          Provider<AdService>.value(value: AdService(remote)),
-          Provider<IAPService>.value(value: IAPService()),
+          Provider<AdService>.value(
+            value: AdService(remote, analytics: analytics, quotaStore: storage),
+          ),
           ChangeNotifierProvider<GameProvider>.value(value: game),
         ],
         child: const MaterialApp(

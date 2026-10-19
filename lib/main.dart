@@ -1,267 +1,58 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'dart:async';
 
-import 'providers/game_provider.dart';
-import 'services/services.dart';
-import 'screens/screens.dart';
-import 'theme/app_typography.dart';
-import 'utils/colors.dart';
-import 'utils/localization.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+import 'app/app_bootstrap.dart';
+import 'screens/startup_error_screen.dart';
+import 'utils/recoverable_errors.dart';
+
+void _installGlobalErrorHandlers() {
+  FlutterError.onError = (details) {
+    if (isRecoverableAsyncError(details.exception)) {
+      debugPrint('Recoverable FlutterError: ${details.exception}');
+      return;
+    }
+    FlutterError.presentError(details);
+    runApp(
+      StartupErrorScreen(
+        message: 'FlutterError: ${details.exceptionAsString()}\n${details.stack}',
+      ),
+    );
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    if (isRecoverableAsyncError(error)) {
+      debugPrint('Recoverable platform error: $error');
+      return true;
+    }
+    runApp(
+      StartupErrorScreen(
+        message: 'PlatformDispatcher: $error\n$stack',
+      ),
+    );
+    return true;
+  };
+}
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  _installGlobalErrorHandlers();
 
-  final storageService = StorageService();
-  final remoteConfigService = RemoteConfigService();
-  final analyticsService = AnalyticsService();
-  final levelService = LevelService();
-  final dailyPuzzleService = DailyPuzzleService();
-  final onboardingService = OnboardingService();
-  final adService = AdService(remoteConfigService);
-  final iapService = IAPService();
-
-  runApp(
-    MultiProvider(
-      providers: [
-        Provider<StorageService>.value(value: storageService),
-        Provider<RemoteConfigService>.value(value: remoteConfigService),
-        Provider<AnalyticsService>.value(value: analyticsService),
-        Provider<LevelService>.value(value: levelService),
-        Provider<DailyPuzzleService>.value(value: dailyPuzzleService),
-        Provider<OnboardingService>.value(value: onboardingService),
-        Provider<AdService>.value(value: adService),
-        Provider<IAPService>.value(value: iapService),
-        ChangeNotifierProvider<GameProvider>(
-          create: (context) => GameProvider(
-            levelService: levelService,
-            storageService: storageService,
-            analyticsService: analyticsService,
-            remoteConfig: remoteConfigService,
-            dailyPuzzleService: dailyPuzzleService,
-          ),
+  runZonedGuarded(
+    () {
+      runApp(const BlockshadeBootstrap());
+    },
+    (error, stack) {
+      if (isRecoverableAsyncError(error)) {
+        debugPrint('Recoverable zone error: $error\n$stack');
+        return;
+      }
+      runApp(
+        StartupErrorScreen(
+          message: 'runZonedGuarded: $error\n$stack',
         ),
-      ],
-      child: const BlockshadeApp(),
-    ),
+      );
+    },
   );
-}
-
-class BlockshadeApp extends StatefulWidget {
-  const BlockshadeApp({super.key});
-
-  @override
-  State<BlockshadeApp> createState() => _BlockshadeAppState();
-}
-
-class _BlockshadeAppState extends State<BlockshadeApp> {
-  bool _initialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeServices();
-    });
-  }
-
-  Future<void> _initializeServices() async {
-    final storageService = context.read<StorageService>();
-    final remoteConfigService = context.read<RemoteConfigService>();
-    final analyticsService = context.read<AnalyticsService>();
-    final dailyPuzzleService = context.read<DailyPuzzleService>();
-    final onboardingService = context.read<OnboardingService>();
-    final adService = context.read<AdService>();
-    final iapService = context.read<IAPService>();
-    final gameProvider = context.read<GameProvider>();
-
-    try {
-      try {
-        await SystemChrome.setPreferredOrientations([
-          DeviceOrientation.portraitUp,
-          DeviceOrientation.portraitDown,
-        ]);
-      } catch (e) {
-        debugPrint('Orientation lock error: $e');
-      }
-
-      try {
-        await HapticService.instance.load();
-      } catch (e) {
-        debugPrint('Haptic init error (non-fatal): $e');
-      }
-
-      try {
-        await SoundService.instance.init();
-      } catch (e) {
-        debugPrint('Sound init error (non-fatal): $e');
-      }
-
-      var firebaseAvailable = false;
-      try {
-        await Firebase.initializeApp();
-        firebaseAvailable = true;
-        debugPrint('Firebase initialized successfully');
-      } catch (e) {
-        debugPrint('Firebase init skipped (no google-services.json): $e');
-      }
-
-      try {
-        await storageService.init();
-      } catch (e) {
-        debugPrint('Storage service init error: $e');
-      }
-
-      if (firebaseAvailable) {
-        try {
-          await remoteConfigService.init();
-        } catch (e) {
-          debugPrint('Remote config init error: $e');
-        }
-        try {
-          await analyticsService.init();
-        } catch (e) {
-          debugPrint('Analytics init error: $e');
-        }
-      }
-
-      try {
-        await dailyPuzzleService.init();
-      } catch (e) {
-        debugPrint('Daily puzzle service init error: $e');
-      }
-
-      try {
-        await onboardingService.init();
-      } catch (e) {
-        debugPrint('Onboarding service init error: $e');
-      }
-
-      // Initialize ads - guard against missing AdMob config
-      try {
-        await adService.init();
-      } catch (e) {
-        debugPrint('Ad service init error (non-fatal): $e');
-      }
-
-      // Initialize IAP - guard against Play Store unavailable
-      try {
-        await iapService.init();
-      } catch (e) {
-        debugPrint('IAP service init error (non-fatal): $e');
-      }
-
-      // Initialize game provider - required
-      try {
-        await gameProvider.init();
-      } catch (e) {
-        debugPrint('Game provider init error: $e');
-      }
-
-      // Log app open - optional
-      try {
-        final isFirstOpen = await storageService.isFirstOpen();
-        final daysSinceInstall = await storageService.getDaysSinceInstall();
-        await analyticsService.logAppOpen(
-          firstOpen: isFirstOpen,
-          daysSinceInstall: daysSinceInstall,
-        );
-      } catch (e) {
-        debugPrint('Analytics log error (non-fatal): $e');
-      }
-
-      // Start ad session tracking
-      try {
-        adService.onSessionStart();
-      } catch (e) {
-        debugPrint('Ad session start error (non-fatal): $e');
-      }
-
-      if (mounted) {
-        setState(() {
-          _initialized = true;
-        });
-      }
-    } catch (e) {
-      debugPrint('Service initialization error: $e');
-      if (mounted) {
-        setState(() {
-          _initialized = true; // Still show home screen even on error
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Blockshade',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-        primaryColor: AppColors.primary,
-        scaffoldBackgroundColor: AppColors.background,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          brightness: Brightness.light,
-          primary: AppColors.primary,
-          secondary: AppColors.accent,
-          surface: AppColors.surface,
-          onSurface: AppColors.text,
-        ),
-        textTheme: AppTypography.textTheme(ThemeData.light().textTheme),
-        appBarTheme: AppBarTheme(
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.text,
-          elevation: 0,
-          titleTextStyle: AppTypography.textTheme(ThemeData.light().textTheme).titleLarge,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.text,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-      ),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('sv'),
-      home: _initialized ? const HomeScreen() : const _SplashScreen(),
-    );
-  }
-}
-
-class _SplashScreen extends StatelessWidget {
-  const _SplashScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Blockshade',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 32),
-            CircularProgressIndicator(
-              color: AppColors.primary,
-              strokeWidth: 2,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

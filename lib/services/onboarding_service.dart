@@ -1,34 +1,28 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'preferences_store.dart';
 
 /// Interactive onboarding shown once across the first three campaign levels.
 class OnboardingService {
   static const String _completedKey = 'interactive_onboarding_completed';
   static const String _lockHintKey = 'lock_counter_hint_seen';
 
-  SharedPreferences? _prefs;
-
-  Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
-  }
+  final PreferencesStore _prefs = PreferencesStore.instance;
 
   Future<bool> isOnboardingCompleted() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    return prefs.getBool(_completedKey) ?? false;
+    await _prefs.ensureReady();
+    return await _prefs.getBool(_completedKey) ?? false;
   }
 
   Future<void> markOnboardingCompleted() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    await prefs.setBool(_completedKey, true);
+    await _prefs.setBool(_completedKey, true);
   }
 
   Future<bool> hasSeenLockHint() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    return prefs.getBool(_lockHintKey) ?? false;
+    await _prefs.ensureReady();
+    return await _prefs.getBool(_lockHintKey) ?? false;
   }
 
   Future<void> markLockHintSeen() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    await prefs.setBool(_lockHintKey, true);
+    await _prefs.setBool(_lockHintKey, true);
   }
 
   /// Shown the first time a level actually contains a locked block.
@@ -40,9 +34,8 @@ class OnboardingService {
   }
 
   Future<void> resetForTesting() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    await prefs.remove(_completedKey);
-    await prefs.remove(_lockHintKey);
+    await _prefs.remove(_completedKey);
+    await _prefs.remove(_lockHintKey);
   }
 
   bool shouldShowForLevel(String levelId, bool onboardingCompleted) {

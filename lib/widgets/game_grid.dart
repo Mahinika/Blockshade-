@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../painters/wood_grain_painter.dart';
+import '../theme/move_arrows.dart';
 import '../theme/verkstad_tokens.dart';
 import '../utils/colors.dart';
 import 'block_widget.dart';
 import 'echo_shadow_widget.dart';
 import 'gate_widget.dart';
 
-class GameGrid extends StatelessWidget {
+class GameGrid extends StatefulWidget {
   final GameState gameState;
   final Function(String blockId) onBlockTap;
   final void Function(String blockId)? onBlockPress;
@@ -28,7 +29,17 @@ class GameGrid extends StatelessWidget {
   });
 
   @override
+  State<GameGrid> createState() => _GameGridState();
+}
+
+class _GameGridState extends State<GameGrid> {
+  String? _pressedBlockId;
+
+  @override
   Widget build(BuildContext context) {
+    final gameState = widget.gameState;
+    final cellSize = widget.cellSize;
+    final world = widget.world;
     final level = gameState.level;
     final gridWidth = level.grid.width * cellSize;
     final gridHeight = level.grid.height * cellSize;
@@ -44,7 +55,7 @@ class GameGrid extends StatelessWidget {
             Positioned(
               left: gateThickness,
               top: gateThickness,
-              child: _buildGrid(level, gridWidth, gridHeight, benchColor),
+              child: _buildGrid(level, gridWidth, gridHeight, benchColor, cellSize),
             ),
             ...level.gates.map((gate) => GateWidget(
                   gate: gate,
@@ -60,9 +71,11 @@ class GameGrid extends StatelessWidget {
                 offset: gateThickness,
               ),
             ),
+            if (_pressedBlockId != null) _buildGhost(gameState, cellSize, gateThickness),
             ...gameState.blocks.map((block) {
               final key = gameState.blockById(block.lockKeyBlockId);
-              final pulseThis = pulsedBlockId == block.id;
+              final pulseThis = widget.pulsedBlockId == block.id;
+              final heads = arrowHeadsFor(gameState, block);
               return BlockWidget(
                 key: ValueKey('block-${block.id}'),
                 block: block,
@@ -72,9 +85,16 @@ class GameGrid extends StatelessWidget {
                 isLocked: gameState.isBlockLocked(block),
                 keyReadyToExit: gameState.isKeyReadyToExit(block),
                 keyColorName: key?.color,
-                pulseSerial: pulseThis ? pulseSerial : 0,
-                onTap: () => onBlockTap(block.id),
-                onPressDown: () => onBlockPress?.call(block.id),
+                pulseSerial: pulseThis ? widget.pulseSerial : 0,
+                horizontal: axisForDirection(block.direction) == MoveAxis.horizontal,
+                negativeHead: heads.negativeOpen,
+                positiveHead: heads.positiveOpen,
+                onTap: () => widget.onBlockTap(block.id),
+                onPressDown: () {
+                  setState(() => _pressedBlockId = block.id);
+                  widget.onBlockPress?.call(block.id);
+                },
+                onPressUp: () => setState(() => _pressedBlockId = null),
               );
             }),
           ],
@@ -83,7 +103,48 @@ class GameGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildGrid(Level level, double gridWidth, double gridHeight, Color benchColor) {
+  Widget _buildGhost(GameState gameState, double cellSize, double gateThickness) {
+    Block? block;
+    for (final candidate in gameState.blocks) {
+      if (candidate.id == _pressedBlockId) {
+        block = candidate;
+        break;
+      }
+    }
+    if (block == null) return const SizedBox.shrink();
+    final cells = furthestSlideCells(gameState, block);
+    if (cells == null) return const SizedBox.shrink();
+
+    return Stack(
+      children: cells.map((cell) {
+        return Positioned(
+          left: gateThickness + cell.x * cellSize + 3,
+          top: gateThickness + cell.y * cellSize + 3,
+          child: IgnorePointer(
+            child: Container(
+              width: cellSize - 6,
+              height: cellSize - 6,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: VerkstadTokens.pencil.withValues(alpha: 0.35),
+                  width: 1.4,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildGrid(
+    Level level,
+    double gridWidth,
+    double gridHeight,
+    Color benchColor,
+    double cellSize,
+  ) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
