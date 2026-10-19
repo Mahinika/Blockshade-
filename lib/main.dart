@@ -12,30 +12,60 @@ import 'utils/localization.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
   try {
-    await Firebase.initializeApp();
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
   } catch (e) {
-    debugPrint('Firebase init error (expected in dev without config): $e');
+    debugPrint('Orientation lock error: $e');
   }
 
+  // Initialize Firebase (optional - may not have google-services.json)
+  bool firebaseAvailable = false;
+  try {
+    await Firebase.initializeApp();
+    firebaseAvailable = true;
+    debugPrint('Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('Firebase init skipped (no google-services.json): $e');
+  }
+
+  // Storage service - required, but guard anyway
   final storageService = StorageService();
-  await storageService.init();
+  try {
+    await storageService.init();
+  } catch (e) {
+    debugPrint('Storage service init error: $e');
+  }
 
+  // Remote config - optional, uses defaults if Firebase unavailable
   final remoteConfigService = RemoteConfigService();
-  await remoteConfigService.init();
+  if (firebaseAvailable) {
+    try {
+      await remoteConfigService.init();
+    } catch (e) {
+      debugPrint('Remote config init error: $e');
+    }
+  }
 
+  // Analytics - optional
   final analyticsService = AnalyticsService();
-  await analyticsService.init();
+  if (firebaseAvailable) {
+    try {
+      await analyticsService.init();
+    } catch (e) {
+      debugPrint('Analytics init error: $e');
+    }
+  }
 
+  // Level service - required for game
   final levelService = LevelService();
 
+  // Ad service - optional
   final adService = AdService(remoteConfigService);
 
+  // IAP service - optional
   final iapService = IAPService();
 
   runApp(
@@ -78,38 +108,66 @@ class _BlockshadeAppState extends State<BlockshadeApp> {
   }
 
   Future<void> _initializeServices() async {
-    final adService = context.read<AdService>();
-    final iapService = context.read<IAPService>();
-    final gameProvider = context.read<GameProvider>();
-    final storageService = context.read<StorageService>();
-    final analyticsService = context.read<AnalyticsService>();
-
     try {
-      await adService.init();
+      final adService = context.read<AdService>();
+      final iapService = context.read<IAPService>();
+      final gameProvider = context.read<GameProvider>();
+      final storageService = context.read<StorageService>();
+      final analyticsService = context.read<AnalyticsService>();
+
+      // Initialize ads - guard against missing AdMob config
+      try {
+        await adService.init();
+      } catch (e) {
+        debugPrint('Ad service init error (non-fatal): $e');
+      }
+
+      // Initialize IAP - guard against Play Store unavailable
+      try {
+        await iapService.init();
+      } catch (e) {
+        debugPrint('IAP service init error (non-fatal): $e');
+      }
+
+      // Initialize game provider - required
+      try {
+        await gameProvider.init();
+      } catch (e) {
+        debugPrint('Game provider init error: $e');
+      }
+
+      // Log app open - optional
+      try {
+        final isFirstOpen = await storageService.isFirstOpen();
+        final daysSinceInstall = await storageService.getDaysSinceInstall();
+        await analyticsService.logAppOpen(
+          firstOpen: isFirstOpen,
+          daysSinceInstall: daysSinceInstall,
+        );
+      } catch (e) {
+        debugPrint('Analytics log error (non-fatal): $e');
+      }
+
+      // Start ad session tracking
+      try {
+        adService.onSessionStart();
+      } catch (e) {
+        debugPrint('Ad session start error (non-fatal): $e');
+      }
+
+      if (mounted) {
+        setState(() {
+          _initialized = true;
+        });
+      }
     } catch (e) {
-      debugPrint('Ad service init error: $e');
+      debugPrint('Service initialization error: $e');
+      if (mounted) {
+        setState(() {
+          _initialized = true; // Still show home screen even on error
+        });
+      }
     }
-
-    try {
-      await iapService.init();
-    } catch (e) {
-      debugPrint('IAP service init error: $e');
-    }
-
-    await gameProvider.init();
-
-    final isFirstOpen = await storageService.isFirstOpen();
-    final daysSinceInstall = await storageService.getDaysSinceInstall();
-    await analyticsService.logAppOpen(
-      firstOpen: isFirstOpen,
-      daysSinceInstall: daysSinceInstall,
-    );
-
-    adService.onSessionStart();
-
-    setState(() {
-      _initialized = true;
-    });
   }
 
   @override

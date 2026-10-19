@@ -40,35 +40,62 @@ class IAPService {
   bool get hasStarterPack => _purchasedProducts.contains(IAPProducts.starterPack);
 
   Future<void> init() async {
-    _available = await _iap.isAvailable();
-    if (!_available) {
-      print('IAP not available');
-      return;
+    try {
+      _available = await _iap.isAvailable();
+      if (!_available) {
+        print('IAP not available (Play Store not present or not signed in)');
+        return;
+      }
+
+      _subscription = _iap.purchaseStream.listen(
+        _handlePurchaseUpdates,
+        onDone: () => _subscription?.cancel(),
+        onError: (error) => print('Purchase stream error: $error'),
+      );
+
+      try {
+        await _loadProducts();
+      } catch (e) {
+        print('Failed to load IAP products: $e');
+      }
+      
+      try {
+        await _restorePurchases();
+      } catch (e) {
+        print('Failed to restore purchases: $e');
+      }
+    } catch (e) {
+      print('IAP init failed: $e');
+      _available = false;
     }
-
-    _subscription = _iap.purchaseStream.listen(
-      _handlePurchaseUpdates,
-      onDone: () => _subscription?.cancel(),
-      onError: (error) => print('Purchase stream error: $error'),
-    );
-
-    await _loadProducts();
-    await _restorePurchases();
   }
 
   Future<void> _loadProducts() async {
-    final response = await _iap.queryProductDetails(IAPProducts.allProducts);
+    if (!_available) return;
+    
+    try {
+      final response = await _iap.queryProductDetails(IAPProducts.allProducts);
 
-    if (response.notFoundIDs.isNotEmpty) {
-      print('Products not found: ${response.notFoundIDs}');
+      if (response.notFoundIDs.isNotEmpty) {
+        print('Products not found: ${response.notFoundIDs}');
+      }
+
+      _products = response.productDetails;
+      print('Loaded ${_products.length} products');
+    } catch (e) {
+      print('Error loading products: $e');
+      _products = [];
     }
-
-    _products = response.productDetails;
-    print('Loaded ${_products.length} products');
   }
 
   Future<void> _restorePurchases() async {
-    await _iap.restorePurchases();
+    if (!_available) return;
+    
+    try {
+      await _iap.restorePurchases();
+    } catch (e) {
+      print('Error restoring purchases: $e');
+    }
   }
 
   void _handlePurchaseUpdates(List<PurchaseDetails> purchases) {
@@ -136,7 +163,13 @@ class IAPService {
   }
 
   Future<void> restorePurchases() async {
-    await _iap.restorePurchases();
+    if (!_available) return;
+    
+    try {
+      await _iap.restorePurchases();
+    } catch (e) {
+      print('Error restoring purchases: $e');
+    }
   }
 
   void dispose() {

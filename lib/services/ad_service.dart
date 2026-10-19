@@ -32,51 +32,69 @@ class AdService {
 
   AdService(this._remoteConfig);
 
+  bool _initialized = false;
+
   Future<void> init() async {
-    await MobileAds.instance.initialize();
-    _sessionStartTime = DateTime.now();
-    _loadInterstitialAd();
-    _loadRewardedAd();
+    try {
+      await MobileAds.instance.initialize();
+      _initialized = true;
+      _sessionStartTime = DateTime.now();
+      _loadInterstitialAd();
+      _loadRewardedAd();
+    } catch (e) {
+      print('AdMob initialization failed: $e');
+      _initialized = false;
+    }
   }
 
   void _loadInterstitialAd() {
-    if (_isInterstitialLoading) return;
+    if (!_initialized || _isInterstitialLoading) return;
     _isInterstitialLoading = true;
 
-    InterstitialAd.load(
-      adUnitId: interstitialAdUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialLoading = false;
-        },
-        onAdFailedToLoad: (error) {
-          print('Interstitial ad failed to load: $error');
-          _isInterstitialLoading = false;
-        },
-      ),
-    );
+    try {
+      InterstitialAd.load(
+        adUnitId: interstitialAdUnitId,
+        request: const AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (ad) {
+            _interstitialAd = ad;
+            _isInterstitialLoading = false;
+          },
+          onAdFailedToLoad: (error) {
+            print('Interstitial ad failed to load: $error');
+            _isInterstitialLoading = false;
+          },
+        ),
+      );
+    } catch (e) {
+      print('Interstitial ad load error: $e');
+      _isInterstitialLoading = false;
+    }
   }
 
   void _loadRewardedAd() {
-    if (_isRewardedLoading) return;
+    if (!_initialized || _isRewardedLoading) return;
     _isRewardedLoading = true;
 
-    RewardedAd.load(
-      adUnitId: rewardedAdUnitId,
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
-          _rewardedAd = ad;
-          _isRewardedLoading = false;
-        },
-        onAdFailedToLoad: (error) {
-          print('Rewarded ad failed to load: $error');
-          _isRewardedLoading = false;
-        },
-      ),
-    );
+    try {
+      RewardedAd.load(
+        adUnitId: rewardedAdUnitId,
+        request: const AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (ad) {
+            _rewardedAd = ad;
+            _isRewardedLoading = false;
+          },
+          onAdFailedToLoad: (error) {
+            print('Rewarded ad failed to load: $error');
+            _isRewardedLoading = false;
+          },
+        ),
+      );
+    } catch (e) {
+      print('Rewarded ad load error: $e');
+      _isRewardedLoading = false;
+    }
   }
 
   bool shouldShowInterstitial(int currentLevel, bool adsRemoved) {
