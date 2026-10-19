@@ -15,6 +15,9 @@
 -keepattributes *Annotation*
 -keepattributes Signature
 
+# AudioPlayers (Verkstad sound hooks)
+-keep class xyz.luan.audioplayers.** { *; }
+
 # In-App Billing
 -keep class com.android.vending.billing.** { *; }
 
