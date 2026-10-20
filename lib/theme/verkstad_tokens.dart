@@ -17,6 +17,9 @@ abstract final class VerkstadTokens {
 
   static const Color maskingTape = Color(0xFFF1D9A0);
   static const Color brassPin = Color(0xFFC89B3C);
+  static const Color coinInk = Color(0xFF6E5112);
+  static const Color valvetRim = brassPin;
+  static const double valvetRimWidth = 3.0;
 
   // Världar – bänkskivor
   static const Color world1Bench = benchBirch;
@@ -53,5 +56,11 @@ abstract final class VerkstadTokens {
       default:
         return world1Bench;
     }
+  }
+
+  /// Playing surface under the grid (Valvet uses birch inset on walnut).
+  static Color boardForWorld(int world) {
+    if (world == 2) return benchBirch;
+    return benchForWorld(world);
   }
 }

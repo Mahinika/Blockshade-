@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:blockshade/theme/block_looks.dart';
 import 'package:blockshade/theme/verkstad_tokens.dart';
 import 'package:blockshade/utils/colors.dart';
 import 'package:blockshade/widgets/padlock_painter.dart';
@@ -25,9 +26,24 @@ double contrastRatio(Color a, Color b) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+Color mix(Color fg, Color bg, double alpha) => Color.lerp(bg, fg, alpha)!;
+
 void main() {
   test('UI-text mot bänkskiva ≥ 4.5:1', () {
-    expect(contrastRatio(VerkstadTokens.ink, VerkstadTokens.benchBirch), greaterThanOrEqualTo(4.5));
+    for (var w = 1; w <= 3; w++) {
+      expect(
+        contrastRatio(VerkstadTokens.ink, VerkstadTokens.boardForWorld(w)),
+        greaterThanOrEqualTo(4.5),
+        reason: 'world $w',
+      );
+    }
+  });
+
+  test('Pilfärg mot blockfärg ≥ 4.5:1', () {
+    for (final entry in BlockLooks.byColor.entries) {
+      final ratio = contrastRatio(entry.value.arrow, entry.value.fill);
+      expect(ratio, greaterThanOrEqualTo(4.5), reason: entry.key);
+    }
   });
 
   test('Blockfärger mot bakgrund (gul med kant undantag)', () {
@@ -55,10 +71,47 @@ void main() {
     expect(lockPatternColor('blue'), const Color(0xFFFFF8EC));
   });
 
-  test('Skrafferingslinje mot björk ≥ 3:1', () {
+  test('Skraffering och vägg mot bänk ≥ 3:1', () {
+    for (var w = 1; w <= 3; w++) {
+      final board = VerkstadTokens.boardForWorld(w);
+      final hatchAlpha = w == 3 ? 0.62 : 0.55;
+      final hatch = mix(VerkstadTokens.pencil, board, hatchAlpha);
+      expect(contrastRatio(hatch, board), greaterThanOrEqualTo(3.0), reason: 'hatch w$w');
+      final wall = AppColors.wall.withValues(alpha: 0.75);
+      expect(contrastRatio(wall, board), greaterThanOrEqualTo(3.0), reason: 'wall w$w');
+      expect(contrastRatio(VerkstadTokens.pencil, board), greaterThanOrEqualTo(3.0), reason: 'pencil w$w');
+    }
+  });
+
+  test('Undo-text och coinInk mot björk ≥ 4.5:1', () {
+    const undoText = Color(0xFFFFF8EC);
+    expect(contrastRatio(undoText, AppColors.primary), greaterThanOrEqualTo(4.5));
+    expect(contrastRatio(VerkstadTokens.coinInk, VerkstadTokens.benchBirch), greaterThanOrEqualTo(4.5));
+  });
+
+  test('Valvet: björk mot valnöt och mässing mot valnöt', () {
     expect(
-      contrastRatio(VerkstadTokens.pencil, VerkstadTokens.benchBirch),
+      contrastRatio(VerkstadTokens.benchBirch, VerkstadTokens.world2Bench),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      contrastRatio(VerkstadTokens.valvetRim, VerkstadTokens.world2Bench),
       greaterThanOrEqualTo(3.0),
     );
+  });
+
+  test('Portmönster mot portfärg ≥ 3', () {
+    for (final entry in BlockLooks.byColor.entries) {
+      final ratio = contrastRatio(entry.value.arrow, entry.value.fill);
+      expect(ratio, greaterThanOrEqualTo(3.0), reason: entry.key);
+    }
+  });
+
+  test('Portkant mot bänk ≥ 3 per värld', () {
+    for (var w = 1; w <= 3; w++) {
+      final edge = w == 2 ? VerkstadTokens.benchBirch : VerkstadTokens.pencil;
+      final bench = VerkstadTokens.benchForWorld(w);
+      expect(contrastRatio(edge, bench), greaterThanOrEqualTo(3.0), reason: 'world $w');
+    }
   });
 }
