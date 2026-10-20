@@ -40,6 +40,13 @@ class _BrassStarPainter extends CustomPainter {
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
       );
       canvas.drawPath(path, Paint()..color = VerkstadTokens.brassPin);
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = VerkstadTokens.pencil
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
       canvas.drawCircle(
         center.translate(-size.width * 0.08, -size.height * 0.1),
         size.width * 0.06,
@@ -49,9 +56,9 @@ class _BrassStarPainter extends CustomPainter {
       canvas.drawPath(
         path,
         Paint()
-          ..color = VerkstadTokens.pencil.withValues(alpha: 0.35)
+          ..color = VerkstadTokens.pencil
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2,
+          ..strokeWidth = 1.5,
       );
     }
   }
