@@ -28,29 +28,6 @@ class AxisArrowHeads {
   final bool positiveOpen;
 }
 
-int notchCountForColor(String colorName) {
-  switch (colorName.toLowerCase()) {
-    case 'red':
-      return 1;
-    case 'blue':
-      return 2;
-    case 'yellow':
-      return 3;
-    case 'green':
-      return 4;
-    case 'purple':
-      return 5;
-    case 'orange':
-      return 6;
-    case 'cyan':
-      return 7;
-    case 'pink':
-      return 8;
-    default:
-      return 1;
-  }
-}
-
 bool _sideOpen(GameState state, Block block, Direction direction) {
   final delta = direction.delta;
   final next = block.cells.map((c) => c + delta).toList();

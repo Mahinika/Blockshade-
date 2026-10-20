@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../painters/wood_block_painter.dart';
 import '../services/haptic_service.dart';
-import '../theme/move_arrows.dart';
+import '../theme/block_looks.dart';
 import '../utils/colors.dart';
 import '../utils/localization.dart';
 import '../theme/verkstad_tokens.dart';
@@ -25,6 +25,7 @@ class BlockWidget extends StatefulWidget {
   final bool horizontal;
   final bool negativeHead;
   final bool positiveHead;
+  final int world;
 
   const BlockWidget({
     super.key,
@@ -42,6 +43,7 @@ class BlockWidget extends StatefulWidget {
     this.horizontal = true,
     this.negativeHead = true,
     this.positiveHead = true,
+    this.world = 1,
   });
 
   @override
@@ -234,12 +236,14 @@ class _BlockWidgetState extends State<BlockWidget> with TickerProviderStateMixin
                         painter: WoodBlockPainter(
                           fillColor: baseColor,
                           colorName: widget.block.color,
-                          textureSeed: textureSeed + notchCountForColor(widget.block.color) * 17,
+                          cellSize: widget.cellSize,
+                          textureSeed:
+                              textureSeed + BlockLooks.patternFor(widget.block.color).index * 17,
                           lift: _lift,
                           horizontal: widget.horizontal,
                           negativeHead: widget.negativeHead,
                           positiveHead: widget.positiveHead,
-                          notchCount: notchCountForColor(widget.block.color),
+                          lightEdge: widget.world == 2,
                         ),
                         child: Stack(
                           clipBehavior: Clip.none,

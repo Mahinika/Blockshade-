@@ -2,20 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../theme/block_symbols.dart';
+import '../painters/block_pattern_painter.dart';
+import '../theme/block_looks.dart';
 import '../utils/colors.dart';
 
 /// Arrow color printed at full coverage on the key-colored lock body.
-Color lockPatternColor(String colorName) {
-  switch (colorName.toLowerCase()) {
-    case 'yellow':
-      return const Color(0xFF1A120C);
-    case 'orange':
-      return const Color(0xFF000000);
-    default:
-      return const Color(0xFFFFF8EC);
-  }
-}
+Color lockPatternColor(String colorName) => BlockLooks.arrowColor(colorName);
 
 /// Tape-tag padlock anchored on a block. No countdown — the body is the key.
 class PadlockPainter extends CustomPainter {
@@ -73,25 +65,18 @@ class PadlockPainter extends CustomPainter {
   }
 
   void _paintKeyPattern(Canvas canvas, RRect body, double c) {
-    final kind = BlockSymbols.forColorName(keyColorName);
-    if (kind == null) return;
-    final period = 0.125 * c;
+    final pattern = BlockLooks.patternFor(keyColorName);
     final color = lockPatternColor(keyColorName);
     canvas.save();
     canvas.clipRRect(body);
-    final bounds = body.outerRect;
-    for (var y = bounds.top; y < bounds.bottom - 0.001; y += period) {
-      for (var x = bounds.left; x < bounds.right - 0.001; x += period) {
-        BlockSymbols.paintSymbol(
-          canvas,
-          Rect.fromLTWH(x, y, period, period),
-          kind,
-          color: color,
-          opacity: 1,
-          irregularity: 0,
-        );
-      }
-    }
+    BlockPatternPainter.paintGroovePattern(
+      canvas,
+      body.outerRect,
+      pattern,
+      c * 0.5,
+      gateStyle: true,
+      inkColor: color,
+    );
     canvas.restore();
   }
 
