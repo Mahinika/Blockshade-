@@ -65,7 +65,7 @@ class HomeScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildResourceTape(Icons.favorite, '${provider.progress.currentLives}/$maxLives', AppColors.lifeColor),
-          _buildResourceTape(Icons.monetization_on, '${provider.progress.coins}', AppColors.coinColor),
+          _buildResourceTape(Icons.monetization_on, '${provider.progress.coins}', VerkstadTokens.coinInk),
           _buildResourceTape(Icons.star, '${provider.progress.totalStars}', AppColors.starFilled, star: true),
         ],
       ),

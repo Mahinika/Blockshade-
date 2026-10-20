@@ -3,7 +3,8 @@
     <application
         android:label="Blockshade"
         android:name=".BlockshadeApplication"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
 
         <!-- Test app id by default. Gradle reads config/admob.json so one file updates this. -->
         <meta-data

@@ -95,7 +95,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.monetization_on, color: AppColors.coinColor, size: 18),
+                          const Icon(Icons.monetization_on, color: VerkstadTokens.coinInk, size: 18),
                           const SizedBox(width: 4),
                           Text('${provider.progress.coins}'),
                         ],

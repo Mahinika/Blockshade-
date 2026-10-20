@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
@@ -7,8 +9,10 @@ import '../utils/colors.dart';
 import '../utils/localization.dart';
 import '../theme/app_typography.dart';
 import '../theme/verkstad_tokens.dart';
+import '../utils/gate_anim.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/level_complete_overlay.dart';
+import '../widgets/lock_tutorial_hint.dart';
 import '../widgets/masking_tape.dart';
 import '../widgets/onboarding_overlay.dart';
 import '../widgets/workshop_background.dart';
@@ -28,6 +32,14 @@ class _GameScreenState extends State<GameScreen> {
   bool _wasLost = false;
   bool _showOnboarding = false;
   bool _onboardingChecked = false;
+  bool _showLockHint = false;
+  String? _lockToast;
+  int _lockToastSerial = 0;
+  Timer? _lockToastTimer;
+  String? _pulsedBlockId;
+  int _pulseSerial = 0;
+  GateAnimEvent? _gateAnim;
+  int _gateAnimSerial = 0;
   String? _dailyHintMessage;
   final _juiceKey = GlobalKey<JuiceOverlayState>();
 
@@ -42,14 +54,33 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    _lockToastTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _evaluateOnboarding() async {
     final onboarding = context.read<OnboardingService>();
+    final game = context.read<GameProvider>();
     final completed = await onboarding.isOnboardingCompleted();
+    if (!mounted) return;
     final show = onboarding.shouldShowForLevel(widget.levelId, completed);
+    final level = game.currentLevel;
+    final hasLock = level?.blocks.any((block) => block.lockKeyBlockId != null) ?? false;
+    final seenLockHint = await onboarding.hasSeenLockHint();
+    final showLock = onboarding.shouldShowLockHint(
+      levelHasLockedBlock: hasLock,
+      hintAlreadySeen: seenLockHint,
+    ) && !show;
+    if (showLock) {
+      await onboarding.markLockHintSeen();
+    }
     if (mounted) {
       setState(() {
         _onboardingChecked = true;
         _showOnboarding = show;
+        _showLockHint = showLock;
       });
     }
   }
@@ -132,7 +163,9 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
               ),
-              _buildFooter(provider, l10n),
+              if (_showLockHint)
+                LockTutorialHint(onDismiss: _dismissLockHint),
+              _buildFooter(provider, l10n, level.world == 0 ? 1 : level.world),
             ],
           ),
         ),
@@ -223,6 +256,9 @@ class _GameScreenState extends State<GameScreen> {
             world: world,
             onBlockTap: (blockId) => _onBlockTap(provider, blockId),
             onBlockPress: (_) => _juiceKey.currentState?.onBlockPress(),
+            pulsedBlockId: _pulsedBlockId,
+            pulseSerial: _pulseSerial,
+            gateAnim: _gateAnim,
           ),
           if (provider.isWon) _buildWinOverlay(provider),
           if (provider.isLost) _buildLoseOverlay(provider),
@@ -232,6 +268,17 @@ class _GameScreenState extends State<GameScreen> {
               anchorFraction: _onboardingAnchor(widget.levelId),
               onSkip: _skipOnboarding,
               onFinishedStep: _finishOnboardingStep,
+            ),
+          if (_lockToast != null)
+            Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: LockMoveToast(
+                  key: ValueKey('lock-toast-$_lockToastSerial'),
+                  message: _lockToast!,
+                ),
+              ),
             ),
           if (_dailyHintMessage != null)
             Align(
@@ -272,6 +319,21 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
+  void _dismissLockHint() {
+    setState(() => _showLockHint = false);
+  }
+
+  void _showLockToastMessage(String message) {
+    _lockToastTimer?.cancel();
+    setState(() {
+      _lockToastSerial++;
+      _lockToast = message;
+    });
+    _lockToastTimer = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) setState(() => _lockToast = null);
+    });
+  }
+
   void _revealHint(Level level, AppLocalizations l10n) {
     final solver = Solver(level);
     final result = solver.solve();
@@ -288,8 +350,23 @@ class _GameScreenState extends State<GameScreen> {
     final state = provider.gameState;
     if (state == null) return;
     final outcome = state.tryMoveBlock(blockId);
-    if (outcome == null || outcome.result == MoveResult.blocked) return;
+    if (outcome == null) return;
+    if (outcome.result == MoveResult.blocked) {
+      final key = state.blockById(outcome.block.lockKeyBlockId);
+      setState(() {
+        _pulseSerial++;
+        _pulsedBlockId = key?.id;
+      });
+      if (key != null) {
+        _showLockToastMessage(
+          AppLocalizations.of(context).lockKeyFirst(key.color),
+        );
+      }
+      return;
+    }
     _juiceKey.currentState?.onMoveOutcome(outcome, outcome.block.color);
+    final gateEvent = gateAnimForOutcome(state, outcome, _gateAnimSerial++);
+    setState(() => _gateAnim = gateEvent);
     provider.makeMove(blockId);
   }
 
@@ -404,7 +481,7 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _buildFooter(GameProvider provider, AppLocalizations l10n) {
+  Widget _buildFooter(GameProvider provider, AppLocalizations l10n, int world) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -419,12 +496,16 @@ class _GameScreenState extends State<GameScreen> {
           _buildResourceDisplay(
             Icons.monetization_on,
             '${provider.progress.coins}',
-            AppColors.coinColor,
+            VerkstadTokens.coinInk,
           ),
           
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: provider.canUndo() ? AppColors.primary : AppColors.surface,
+              foregroundColor: const Color(0xFFFFF8EC),
+              side: world == 2
+                  ? const BorderSide(color: VerkstadTokens.benchBirch, width: 2)
+                  : null,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             onPressed: provider.canUndo() ? () => provider.undo() : null,

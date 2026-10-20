@@ -3,6 +3,7 @@ import 'preferences_store.dart';
 /// Interactive onboarding shown once across the first three campaign levels.
 class OnboardingService {
   static const String _completedKey = 'interactive_onboarding_completed';
+  static const String _lockHintKey = 'lock_counter_hint_seen';
 
   final PreferencesStore _prefs = PreferencesStore.instance;
 
@@ -15,8 +16,26 @@ class OnboardingService {
     await _prefs.setBool(_completedKey, true);
   }
 
+  Future<bool> hasSeenLockHint() async {
+    await _prefs.ensureReady();
+    return await _prefs.getBool(_lockHintKey) ?? false;
+  }
+
+  Future<void> markLockHintSeen() async {
+    await _prefs.setBool(_lockHintKey, true);
+  }
+
+  /// Shown the first time a level actually contains a locked block.
+  bool shouldShowLockHint({
+    required bool levelHasLockedBlock,
+    required bool hintAlreadySeen,
+  }) {
+    return levelHasLockedBlock && !hintAlreadySeen;
+  }
+
   Future<void> resetForTesting() async {
     await _prefs.remove(_completedKey);
+    await _prefs.remove(_lockHintKey);
   }
 
   bool shouldShowForLevel(String levelId, bool onboardingCompleted) {

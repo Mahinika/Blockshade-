@@ -9,11 +9,13 @@ class EchoShadowWidget extends StatefulWidget {
     required this.shadow,
     required this.cellSize,
     required this.offset,
+    this.world = 1,
   });
 
   final EchoShadow shadow;
   final double cellSize;
   final double offset;
+  final int world;
 
   @override
   State<EchoShadowWidget> createState() => _EchoShadowWidgetState();
@@ -77,6 +79,7 @@ class _EchoShadowWidgetState extends State<EchoShadowWidget>
             painter: HatchShadowPainter(
               progress: _controller.value,
               remainingMoves: widget.shadow.remainingMoves,
+              hatchAlpha: widget.world == 3 ? 0.62 : 0.55,
             ),
           );
         },

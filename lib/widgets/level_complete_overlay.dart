@@ -92,20 +92,24 @@ class _LevelCompleteOverlayState extends State<LevelCompleteOverlay>
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(3, (i) {
-                  final filled = i < widget.stars;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: ScaleTransition(
-                      scale: filled
-                          ? _starScales[i]
-                          : const AlwaysStoppedAnimation(1.0),
-                      child: BrassStar(filled: filled, size: 40),
-                    ),
-                  );
-                }),
+              MaskingTape(
+                showPin: false,
+                rotation: 0.01,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(3, (i) {
+                    final filled = i < widget.stars;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: ScaleTransition(
+                        scale: filled
+                            ? _starScales[i]
+                            : const AlwaysStoppedAnimation(1.0),
+                        child: BrassStar(filled: filled, size: 40),
+                      ),
+                    );
+                  }),
+                ),
               ),
               const SizedBox(height: 16),
               MaskingTape(

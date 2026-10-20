@@ -78,6 +78,22 @@ class GameState {
     return blocks.any((b) => b.id == block.lockKeyBlockId);
   }
 
+  Block? blockById(String? id) {
+    if (id == null) return null;
+    for (final block in blocks) {
+      if (block.id == id) return block;
+    }
+    return null;
+  }
+
+  /// Display-only: the key would leave the board if it were moved now.
+  /// The lock still opens only when that exit actually happens.
+  bool isKeyReadyToExit(Block lockedBlock) {
+    final keyId = lockedBlock.lockKeyBlockId;
+    if (keyId == null || !isBlockLocked(lockedBlock)) return false;
+    return tryMoveBlock(keyId)?.result == MoveResult.exit;
+  }
+
   Set<BlockCell> get occupiedCells {
     final cells = <BlockCell>{};
     for (final block in blocks) {
