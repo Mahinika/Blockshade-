@@ -8,12 +8,14 @@ class HatchShadowPainter extends CustomPainter {
     required this.progress,
     required this.remainingMoves,
     this.cornerRadius = 6,
+    this.hatchAlpha = 0.55,
   });
 
   /// 0–1 hur mycket av skrafferingen som är ritad.
   final double progress;
   final int remainingMoves;
   final double cornerRadius;
+  final double hatchAlpha;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -26,7 +28,7 @@ class HatchShadowPainter extends CustomPainter {
     const spacing = 5.0;
     const angle = math.pi / 4;
     final hatch = Paint()
-      ..color = VerkstadTokens.pencil.withValues(alpha: 0.55)
+      ..color = VerkstadTokens.pencil.withValues(alpha: hatchAlpha)
       ..strokeWidth = 0.9;
 
     final diag = size.width + size.height;
@@ -65,6 +67,7 @@ class HatchShadowPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant HatchShadowPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-        oldDelegate.remainingMoves != remainingMoves;
+        oldDelegate.remainingMoves != remainingMoves ||
+        oldDelegate.hatchAlpha != hatchAlpha;
   }
 }
