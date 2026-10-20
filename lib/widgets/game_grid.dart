@@ -1,9 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../painters/wood_grain_painter.dart';
+import '../theme/block_looks.dart';
 import '../theme/move_arrows.dart';
 import '../theme/verkstad_tokens.dart';
 import '../utils/colors.dart';
+import '../utils/gate_anim.dart';
 import 'block_widget.dart';
 import 'echo_shadow_widget.dart';
 import 'gate_widget.dart';
@@ -16,6 +20,7 @@ class GameGrid extends StatefulWidget {
   final int world;
   final String? pulsedBlockId;
   final int pulseSerial;
+  final GateAnimEvent? gateAnim;
 
   const GameGrid({
     super.key,
@@ -26,6 +31,7 @@ class GameGrid extends StatefulWidget {
     this.world = 1,
     this.pulsedBlockId,
     this.pulseSerial = 0,
+    this.gateAnim,
   });
 
   @override
@@ -43,8 +49,8 @@ class _GameGridState extends State<GameGrid> {
     final level = gameState.level;
     final gridWidth = level.grid.width * cellSize;
     final gridHeight = level.grid.height * cellSize;
-    final gateThickness = 8.0;
-    final benchColor = VerkstadTokens.benchForWorld(world);
+    final gateThickness = math.max(GateGeom.minThickness, GateGeom.thicknessFactor * cellSize);
+    final benchColor = VerkstadTokens.boardForWorld(world);
 
     return Center(
       child: SizedBox(
@@ -55,7 +61,7 @@ class _GameGridState extends State<GameGrid> {
             Positioned(
               left: gateThickness,
               top: gateThickness,
-              child: _buildGrid(level, gridWidth, gridHeight, benchColor, cellSize),
+              child: _buildGrid(level, gridWidth, gridHeight, benchColor, cellSize, world),
             ),
             ...level.gates.map((gate) => GateWidget(
                   gate: gate,
@@ -63,12 +69,20 @@ class _GameGridState extends State<GameGrid> {
                   gridWidth: level.grid.width,
                   gridHeight: level.grid.height,
                   gateThickness: gateThickness,
+                  world: world,
+                  animEvent: widget.gateAnim != null &&
+                          widget.gateAnim!.gate.side == gate.side &&
+                          widget.gateAnim!.gate.position == gate.position &&
+                          widget.gateAnim!.gate.color == gate.color
+                      ? widget.gateAnim
+                      : null,
                 )),
             ...gameState.echoShadows.map(
               (shadow) => EchoShadowWidget(
                 shadow: shadow,
                 cellSize: cellSize,
                 offset: gateThickness,
+                world: world,
               ),
             ),
             if (_pressedBlockId != null) _buildGhost(gameState, cellSize, gateThickness),
@@ -89,6 +103,7 @@ class _GameGridState extends State<GameGrid> {
                 horizontal: axisForDirection(block.direction) == MoveAxis.horizontal,
                 negativeHead: heads.negativeOpen,
                 positiveHead: heads.positiveOpen,
+                world: world,
                 onTap: () => widget.onBlockTap(block.id),
                 onPressDown: () {
                   setState(() => _pressedBlockId = block.id);
@@ -144,8 +159,9 @@ class _GameGridState extends State<GameGrid> {
     double gridHeight,
     Color benchColor,
     double cellSize,
+    int world,
   ) {
-    return ClipRRect(
+    final board = ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: SizedBox(
         width: gridWidth,
@@ -178,6 +194,19 @@ class _GameGridState extends State<GameGrid> {
           ],
         ),
       ),
+    );
+
+    if (world != 2) return board;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: VerkstadTokens.valvetRim,
+          width: VerkstadTokens.valvetRimWidth,
+        ),
+      ),
+      child: board,
     );
   }
 }

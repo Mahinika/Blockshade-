@@ -9,6 +9,7 @@ import '../utils/colors.dart';
 import '../utils/localization.dart';
 import '../theme/app_typography.dart';
 import '../theme/verkstad_tokens.dart';
+import '../utils/gate_anim.dart';
 import '../widgets/game_grid.dart';
 import '../widgets/level_complete_overlay.dart';
 import '../widgets/lock_tutorial_hint.dart';
@@ -37,6 +38,8 @@ class _GameScreenState extends State<GameScreen> {
   Timer? _lockToastTimer;
   String? _pulsedBlockId;
   int _pulseSerial = 0;
+  GateAnimEvent? _gateAnim;
+  int _gateAnimSerial = 0;
   String? _dailyHintMessage;
   final _juiceKey = GlobalKey<JuiceOverlayState>();
 
@@ -162,7 +165,7 @@ class _GameScreenState extends State<GameScreen> {
               ),
               if (_showLockHint)
                 LockTutorialHint(onDismiss: _dismissLockHint),
-              _buildFooter(provider, l10n),
+              _buildFooter(provider, l10n, level.world == 0 ? 1 : level.world),
             ],
           ),
         ),
@@ -255,6 +258,7 @@ class _GameScreenState extends State<GameScreen> {
             onBlockPress: (_) => _juiceKey.currentState?.onBlockPress(),
             pulsedBlockId: _pulsedBlockId,
             pulseSerial: _pulseSerial,
+            gateAnim: _gateAnim,
           ),
           if (provider.isWon) _buildWinOverlay(provider),
           if (provider.isLost) _buildLoseOverlay(provider),
@@ -361,6 +365,8 @@ class _GameScreenState extends State<GameScreen> {
       return;
     }
     _juiceKey.currentState?.onMoveOutcome(outcome, outcome.block.color);
+    final gateEvent = gateAnimForOutcome(state, outcome, _gateAnimSerial++);
+    setState(() => _gateAnim = gateEvent);
     provider.makeMove(blockId);
   }
 
@@ -475,7 +481,7 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _buildFooter(GameProvider provider, AppLocalizations l10n) {
+  Widget _buildFooter(GameProvider provider, AppLocalizations l10n, int world) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -490,12 +496,16 @@ class _GameScreenState extends State<GameScreen> {
           _buildResourceDisplay(
             Icons.monetization_on,
             '${provider.progress.coins}',
-            AppColors.coinColor,
+            VerkstadTokens.coinInk,
           ),
           
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: provider.canUndo() ? AppColors.primary : AppColors.surface,
+              foregroundColor: const Color(0xFFFFF8EC),
+              side: world == 2
+                  ? const BorderSide(color: VerkstadTokens.benchBirch, width: 2)
+                  : null,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             onPressed: provider.canUndo() ? () => provider.undo() : null,
